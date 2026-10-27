@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const CommunityPage: React.FC = () => {
-  const { communityContributions, addContribution, likeContribution } = useLearning();
+  const { communityContributions, addContribution, likeContribution, isContributionLiked } = useLearning();
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'all' | 'story' | 'song' | 'proverb' | 'word'>('all');
@@ -204,10 +204,23 @@ export const CommunityPage: React.FC = () => {
                 <span>Preserved by <strong className="text-teal-900">{item.authorName}</strong></span>
 
                 <button
+                  type="button"
                   onClick={() => likeContribution(item.contributionId)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cream-200 hover:bg-cream-300 text-terracotta-600 hover:text-terracotta-700 font-bold transition-colors"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all active:scale-95 ${
+                    isContributionLiked(item.contributionId)
+                      ? 'bg-terracotta-100 text-terracotta-700 border border-terracotta-300 shadow-sm'
+                      : 'bg-cream-200 hover:bg-cream-300 text-teal-700 hover:text-terracotta-600'
+                  }`}
+                  title={isContributionLiked(item.contributionId) ? 'Unlike' : 'Like'}
+                  aria-label={isContributionLiked(item.contributionId) ? 'Unlike story' : 'Like story'}
                 >
-                  <Heart className="w-4 h-4 fill-current" />
+                  <Heart
+                    className={`w-4 h-4 transition-transform ${
+                      isContributionLiked(item.contributionId)
+                        ? 'fill-current text-terracotta-600 scale-110'
+                        : 'text-teal-600'
+                    }`}
+                  />
                   <span>{item.likesCount}</span>
                 </button>
               </div>

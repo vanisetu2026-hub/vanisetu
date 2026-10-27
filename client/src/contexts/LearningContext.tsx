@@ -32,6 +32,8 @@ interface LearningContextType {
   updateReminderSettings: (settings: ReminderSettings) => void;
   communityContributions: CommunityContribution[];
   addContribution: (contribution: Omit<CommunityContribution, 'contributionId' | 'likesCount' | 'createdAt' | 'moderationStatus'>) => void;
+  likedContributions: string[];
+  isContributionLiked: (id: string) => boolean;
   likeContribution: (id: string) => void;
   completeLesson: (lessonId: string, score: number, accuracy: number, xpEarned: number) => void;
   isLessonCompleted: (lessonId: string) => boolean;
@@ -43,6 +45,7 @@ const LearningContext = createContext<LearningContextType | undefined>(undefined
 const LOCAL_FAVORITES_KEY = 'vanisetu_favorites';
 const LOCAL_REMINDERS_KEY = 'vanisetu_reminders';
 const LOCAL_COMMUNITY_KEY = 'vanisetu_community_contributions';
+const LOCAL_LIKED_CONTRIBUTIONS_KEY = 'vanisetu_liked_contributions';
 
 export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, updateUser } = useAuth();
@@ -51,6 +54,15 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [languageId, setLanguageId] = useState<string>(
     user?.selectedLanguage || 'mundari'
   );
+
+  const [likedContributions, setLikedContributions] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_LIKED_CONTRIBUTIONS_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
@@ -85,7 +97,29 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [communityContributions, setCommunityContributions] = useState<CommunityContribution[]>(() => {
     try {
       const saved = localStorage.getItem(LOCAL_COMMUNITY_KEY);
-      return saved ? JSON.parse(saved) : COMMUNITY_STORIES;
+      const savedLiked = localStorage.getItem(LOCAL_LIKED_CONTRIBUTIONS_KEY);
+      const likedList: string[] = savedLiked ? JSON.parse(savedLiked) : [];
+
+      if (!saved) {
+        return COMMUNITY_STORIES.map((item) => ({
+          ...item,
+          likesCount: item.likesCount + (likedList.includes(item.contributionId) ? 1 : 0),
+        }));
+      }
+
+      const parsed: CommunityContribution[] = JSON.parse(saved);
+      // Ensure seed stories maintain genuine baseline + user's single like state
+      return parsed.map((item) => {
+        const seed = COMMUNITY_STORIES.find((s) => s.contributionId === item.contributionId);
+        if (seed) {
+          const isLiked = likedList.includes(item.contributionId);
+          return {
+            ...item,
+            likesCount: seed.likesCount + (isLiked ? 1 : 0),
+          };
+        }
+        return item;
+      });
     } catch {
       return COMMUNITY_STORIES;
     }
@@ -174,11 +208,30 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   };
 
+  const isContributionLiked = (id: string): boolean => {
+    return likedContributions.includes(id);
+  };
+
   const likeContribution = (id: string) => {
+    const isAlreadyLiked = likedContributions.includes(id);
+    const updatedLiked = isAlreadyLiked
+      ? likedContributions.filter((contribId) => contribId !== id)
+      : [...likedContributions, id];
+
+    setLikedContributions(updatedLiked);
+    localStorage.setItem(LOCAL_LIKED_CONTRIBUTIONS_KEY, JSON.stringify(updatedLiked));
+
     setCommunityContributions((prev) => {
-      const updated = prev.map((item) =>
-        item.contributionId === id ? { ...item, likesCount: item.likesCount + 1 } : item
-      );
+      const updated = prev.map((item) => {
+        if (item.contributionId === id) {
+          const delta = isAlreadyLiked ? -1 : 1;
+          return {
+            ...item,
+            likesCount: Math.max(0, item.likesCount + delta),
+          };
+        }
+        return item;
+      });
       localStorage.setItem(LOCAL_COMMUNITY_KEY, JSON.stringify(updated));
       return updated;
     });
@@ -263,6 +316,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateReminderSettings,
         communityContributions,
         addContribution,
+        likedContributions,
+        isContributionLiked,
         likeContribution,
         completeLesson,
         isLessonCompleted,
