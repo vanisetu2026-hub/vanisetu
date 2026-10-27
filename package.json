@@ -13,5 +13,8 @@
     "concurrently": "^9.1.2"
   },
   "author": "VANISETU Team",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "firebase": "^13.1.0"
+  }
 }
