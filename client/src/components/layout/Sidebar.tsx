@@ -38,10 +38,10 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="hidden lg:flex flex-col w-56 xl:w-64 bg-cream-100 border-r-2 border-sage-200 h-screen sticky top-0 px-3 xl:px-4 py-4 xl:py-6 justify-between select-none shrink-0 overflow-y-auto scrollbar-thin">
+    <aside className="hidden lg:flex flex-col w-60 xl:w-64 bg-cream-100 border-r-2 border-sage-200 h-screen sticky top-0 px-3.5 xl:px-4 py-4 xl:py-6 justify-between select-none shrink-0 overflow-y-auto scrollbar-thin">
       <div>
         {/* Brand Logo */}
-        <div className="px-2 mb-5 xl:mb-7">
+        <div className="px-1 mb-5 xl:mb-7">
           <Logo size="md" showTagline={true} linkTo="/dashboard" />
         </div>
 

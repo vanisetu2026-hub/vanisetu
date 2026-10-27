@@ -15,21 +15,42 @@ export const Navbar: React.FC<{ isLanding?: boolean }> = ({ isLanding = false })
   return (
     <header className="sticky top-0 z-40 bg-cream-100/95 backdrop-blur-md border-b-2 border-sage-200/80 px-3 sm:px-6 lg:px-8 py-2 sm:py-3 transition-all">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
-        {/* Left: Logo */}
-        <Logo
-          size="md"
-          showTagline={!isLanding}
-          className="shrink-0"
-        />
+        {/* Left: Logo (Shown on mobile & tablet, hidden on desktop when sidebar is present) */}
+        <div className={!isLanding ? 'lg:hidden' : ''}>
+          <Logo
+            size="md"
+            showTagline={!isLanding}
+            className="shrink-0"
+          />
+        </div>
+
+        {/* Desktop breadcrumb when sidebar is present */}
+        {!isLanding && (
+          <div className="hidden lg:flex items-center gap-2">
+            <span className="text-xs font-bold text-teal-600">Active Course:</span>
+            <button
+              onClick={() => navigate('/languages')}
+              className="flex items-center gap-1.5 bg-cream-50 hover:bg-cream-200 border-2 border-sage-300 px-3 py-1 rounded-2xl text-xs font-bold text-teal-800 transition-colors shadow-sm group"
+              title="Change active tribal language"
+            >
+              <Globe2 className="w-3.5 h-3.5 text-forest-600" />
+              <span>{selectedLanguage.name}</span>
+              <span className="text-teal-600 font-medium">({selectedLanguage.nativeName})</span>
+              <span className="text-[10px] text-forest-700 group-hover:translate-x-0.5 transition-transform ml-0.5">
+                Change →
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* Right Controls */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {user ? (
             <>
-              {/* Selected Language Selector Pill (Hidden on mobile, visible from sm up) */}
+              {/* Selected Language Selector Pill (Hidden on mobile and desktop, visible on tablet) */}
               <button
                 onClick={() => navigate('/languages')}
-                className="hidden md:flex items-center gap-2 bg-cream-50 hover:bg-cream-200 border-2 border-sage-300 px-3 py-1.5 rounded-2xl text-xs font-bold text-teal-800 transition-colors shadow-sm"
+                className="hidden md:flex lg:hidden items-center gap-2 bg-cream-50 hover:bg-cream-200 border-2 border-sage-300 px-3 py-1.5 rounded-2xl text-xs font-bold text-teal-800 transition-colors shadow-sm"
                 title="Change active tribal language"
               >
                 <Globe2 className="w-3.5 h-3.5 text-forest-600" />
