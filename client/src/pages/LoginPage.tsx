@@ -20,7 +20,8 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password) {
       setError('Please provide both email and password.');
       return;
     }
@@ -28,7 +29,7 @@ export const LoginPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await login(email, password);
+      await login(cleanEmail, password);
       addToast({
         type: 'success',
         title: 'Welcome Back!',

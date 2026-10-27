@@ -21,8 +21,15 @@ export const SignupPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password || !confirmPassword) {
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedName || !trimmedEmail || !password || !confirmPassword) {
       setError('Please fill in all required fields.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError('Please enter a valid email address (e.g. name@example.com).');
       return;
     }
     if (password.length < 6) {
@@ -38,7 +45,7 @@ export const SignupPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await signup(name, email, password);
+      await signup(trimmedName, trimmedEmail, password);
       addToast({
         type: 'success',
         title: 'Account Created!',
