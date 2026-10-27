@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import apiRoutes from './routes/apiRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -12,11 +13,11 @@ const PORT = process.env.PORT || 5000;
 app.use(
   cors({
     origin: '*',
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-role'],
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
@@ -29,6 +30,7 @@ app.get('/health', (_req, res) => {
 });
 
 // Mount modular API routes
+app.use('/api/admin', adminRoutes);
 app.use('/api', apiRoutes);
 
 // Error Handling Middleware

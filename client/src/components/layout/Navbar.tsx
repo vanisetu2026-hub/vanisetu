@@ -5,7 +5,7 @@ import { XPBadge } from '../common/XPBadge';
 import { StreakBadge } from '../common/StreakBadge';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLearning } from '../../contexts/LearningContext';
-import { Globe2, User, Bell, LogIn } from 'lucide-react';
+import { Globe2, User, Bell, LogIn, ShieldCheck } from 'lucide-react';
 
 export const Navbar: React.FC<{ isLanding?: boolean }> = ({ isLanding = false }) => {
   const { user } = useAuth();
@@ -76,6 +76,16 @@ export const Navbar: React.FC<{ isLanding?: boolean }> = ({ isLanding = false })
                 <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="absolute top-1 sm:top-1.5 right-1 sm:right-1.5 w-2 h-2 bg-gold-400 rounded-full" />
               </button>
+
+              {/* Admin CMS Access */}
+              <Link
+                to="/admin"
+                className="flex items-center gap-1 bg-gold-100/80 hover:bg-gold-200 border border-gold-400/80 text-forest-900 px-2 sm:px-2.5 py-1 rounded-xl text-xs font-bold transition shadow-sm"
+                title="Open Admin CMS"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-forest-700" />
+                <span className="hidden sm:inline">Admin</span>
+              </Link>
 
               {/* Profile Avatar */}
               <Link

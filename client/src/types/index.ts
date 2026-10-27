@@ -155,3 +155,307 @@ export interface ReminderSettings {
   days: string[]; // ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   sound: boolean;
 }
+
+// ================= ADMIN PANEL TYPES =================
+export type AdminRole =
+  | 'super_admin'
+  | 'content_admin'
+  | 'language_reviewer'
+  | 'moderator'
+  | 'read_only_admin';
+
+export type UserStatus = 'active' | 'suspended' | 'banned';
+export type ModuleStatus = 'draft' | 'published' | 'archived';
+export type LessonStatus = 'draft' | 'published' | 'archived';
+export type ContributionReviewStatus =
+  | 'submitted'
+  | 'pending_review'
+  | 'under_review'
+  | 'approved'
+  | 'rejected'
+  | 'needs_revision';
+
+export type QuestionType =
+  | 'multiple_choice'
+  | 'multiple_select'
+  | 'fill_blank'
+  | 'translation'
+  | 'match_pairs'
+  | 'word_arrangement'
+  | 'listening_comprehension'
+  | 'audio_pronunciation'
+  | 'image_based'
+  | 'true_false'
+  | 'short_answer'
+  | 'vocabulary_recognition';
+
+export interface AdminLanguage {
+  languageId: string;
+  name: string;
+  nativeName: string;
+  scriptName: string;
+  region: string;
+  description: string;
+  speakersCount: string;
+  languageFamily: string;
+  contentStatus: string;
+  isActive: boolean;
+  isFeatured?: boolean;
+  displayOrder: number;
+  sampleGreeting: string;
+  sampleGreetingMeaning: string;
+  culturalNote?: string;
+  iconURL?: string;
+  isArchived?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminModule {
+  moduleId: string;
+  languageId: string;
+  title: string;
+  description: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Cultural Heritage';
+  displayOrder: number;
+  prerequisites: string[];
+  estimatedDuration: string;
+  learningObjectives: string[];
+  status: ModuleStatus;
+  iconURL?: string;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminLesson {
+  lessonId: string;
+  moduleId: string;
+  languageId: string;
+  title: string;
+  description: string;
+  order: number;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  estimatedDuration: string;
+  learningObjectives: string[];
+  vocabularyIntro: string[];
+  culturalInsight: string;
+  xpReward: number;
+  status: LessonStatus;
+  requiredLessonId: string | null;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminQuestion {
+  questionId: string;
+  lessonId: string;
+  moduleId: string;
+  languageId: string;
+  questionText: string;
+  questionType: QuestionType;
+  difficulty: 'easy' | 'medium' | 'hard';
+  options?: string[];
+  correctAnswer: string | string[];
+  explanation: string;
+  hint?: string;
+  audioPronunciationText?: string;
+  audioURL?: string;
+  imageURL?: string;
+  tribalWord?: string;
+  nativeScript?: string;
+  transliteration?: string;
+  englishMeaning?: string;
+  hindiMeaning?: string;
+  pairs?: { tribal: string; translation: string }[];
+  timeLimit?: number;
+  xpReward: number;
+  sequence: number;
+  status: 'draft' | 'published';
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminVocabulary {
+  vocabularyId: string;
+  languageId: string;
+  moduleId?: string;
+  word: string;
+  nativeScript: string;
+  transliteration: string;
+  englishMeaning: string;
+  hindiMeaning: string;
+  partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb' | 'greeting' | 'pronoun' | 'phrase';
+  pronunciationAudioText: string;
+  audioURL?: string;
+  imageURL?: string;
+  category: 'Greetings' | 'Nature' | 'Family' | 'Numbers' | 'Festival' | 'Everyday' | 'Kinship' | 'Food';
+  exampleSentence: {
+    tribal: string;
+    transliteration: string;
+    translation: string;
+  };
+  culturalContext: string;
+  contributor: string;
+  verificationStatus: 'verified' | 'sample_pending_verification' | 'needs_revision';
+  isFeatured: boolean;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminContribution {
+  contributionId: string;
+  uid: string;
+  authorName: string;
+  authorEmail?: string;
+  languageId: string;
+  contentType: 'word' | 'story' | 'song' | 'proverb' | 'translation' | 'correction';
+  title: string;
+  content: string;
+  tribalText: string;
+  translation: string;
+  existingContent?: string;
+  suggestedCorrection?: string;
+  culturalContext: string;
+  region: string;
+  audioURL?: string;
+  imageURL?: string;
+  status: ContributionReviewStatus;
+  reviewerId?: string;
+  reviewerName?: string;
+  reviewNotes?: string;
+  rejectionReason?: string;
+  likesCount: number;
+  createdAt: string;
+  reviewedAt?: string;
+}
+
+export interface AdminUser {
+  uid: string;
+  name: string;
+  email: string;
+  role: AdminRole | 'learner';
+  status: UserStatus;
+  selectedLanguage: string;
+  totalXP: number;
+  currentStreak: number;
+  longestStreak: number;
+  dailyGoal: number;
+  completedLessons: string[];
+  unlockedAchievements: string[];
+  contributionsCount: number;
+  createdAt: string;
+  lastActiveAt: string;
+}
+
+export interface AdminMedia {
+  mediaId: string;
+  name: string;
+  type: 'image' | 'audio' | 'icon' | 'document';
+  url: string;
+  sizeBytes: number;
+  mimeType: string;
+  category: 'lesson' | 'language' | 'module' | 'culture' | 'pronunciation';
+  languageId?: string;
+  usedInCount: number;
+  uploadedBy: string;
+  createdAt: string;
+}
+
+export interface PlatformSettings {
+  platformName: string;
+  tagline: string;
+  description: string;
+  defaultLanguage: string;
+  supportedLanguages: string[];
+  baseXpReward: number;
+  bonusAccuracyXp: number;
+  dailyStreakBonusXp: number;
+  contributionXpReward: number;
+  maintenanceMode: boolean;
+  allowGuestMode: boolean;
+  autoApproveVerifiedElders: boolean;
+  termsUrl: string;
+  privacyUrl: string;
+  communityGuidelinesUrl: string;
+  contactEmail: string;
+  socialInstagram: string;
+  socialX: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
+export interface AdminNotification {
+  notificationId: string;
+  type: 'contribution' | 'report' | 'system' | 'review_task' | 'milestone';
+  title: string;
+  message: string;
+  link?: string;
+  entityType?: string;
+  entityId?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface AuditLog {
+  logId: string;
+  adminId: string;
+  adminName: string;
+  adminRole: AdminRole;
+  action: string;
+  entityType: 'language' | 'module' | 'lesson' | 'question' | 'vocabulary' | 'contribution' | 'user' | 'settings' | 'media';
+  entityId: string;
+  previousValue?: unknown;
+  newValue?: unknown;
+  reason?: string;
+  ipAddress: string;
+  timestamp: string;
+}
+
+export interface VersionRecord {
+  versionId: string;
+  entityType: 'language' | 'module' | 'lesson' | 'question' | 'vocabulary';
+  entityId: string;
+  versionNumber: number;
+  snapshot: unknown;
+  savedBy: string;
+  changeSummary: string;
+  createdAt: string;
+}
+
+export interface AdminStatsData {
+  metrics: {
+    totalUsers: number;
+    activeUsers: number;
+    newUsers: number;
+    totalLanguages: number;
+    publishedModules: number;
+    totalLessons: number;
+    totalQuestions: number;
+    totalVocabularyEntries: number;
+    pendingContributions: number;
+    approvedContributions: number;
+    rejectedContributions: number;
+    totalLearningSessions: number;
+    averageLessonCompletionRate: number;
+  };
+  languageStats: {
+    languageId: string;
+    name: string;
+    nativeName: string;
+    modulesCount: number;
+    lessonsCount: number;
+    vocabularyCount: number;
+    learnersCount: number;
+  }[];
+  recentActivities: AuditLog[];
+  pendingReviewTasks: AdminContribution[];
+  recentUsers: AdminUser[];
+}
+

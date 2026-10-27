@@ -20,6 +20,24 @@ import { RemindersPage } from './pages/RemindersPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { CommunityPage } from './pages/CommunityPage';
 
+// Admin CMS Components & Pages
+import { AdminRouteGuard } from './components/admin/AdminRouteGuard';
+import { AdminLayout } from './components/admin/AdminLayout';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminLanguagesPage } from './pages/admin/AdminLanguagesPage';
+import { AdminModulesPage } from './pages/admin/AdminModulesPage';
+import { AdminLessonsPage } from './pages/admin/AdminLessonsPage';
+import { AdminQuestionsPage } from './pages/admin/AdminQuestionsPage';
+import { AdminVocabularyPage } from './pages/admin/AdminVocabularyPage';
+import { AdminContributionsPage } from './pages/admin/AdminContributionsPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AdminRolesPage } from './pages/admin/AdminRolesPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
+import { AdminMediaPage } from './pages/admin/AdminMediaPage';
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
+import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage';
+import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage';
+
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
@@ -27,6 +45,7 @@ export const App: React.FC = () => {
         <AuthProvider>
           <LearningProvider>
             <Routes>
+              {/* Learner Facing Application */}
               <Route element={<AppLayout />}>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
@@ -44,8 +63,35 @@ export const App: React.FC = () => {
                 <Route path="/reminders" element={<RemindersPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/community" element={<CommunityPage />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
+
+              {/* VANISETU Admin Panel & CMS */}
+              <Route
+                path="/admin"
+                element={
+                  <AdminRouteGuard>
+                    <AdminLayout />
+                  </AdminRouteGuard>
+                }
+              >
+                <Route index element={<AdminDashboardPage />} />
+                <Route path="languages" element={<AdminLanguagesPage />} />
+                <Route path="modules" element={<AdminModulesPage />} />
+                <Route path="lessons" element={<AdminLessonsPage />} />
+                <Route path="questions" element={<AdminQuestionsPage />} />
+                <Route path="vocabulary" element={<AdminVocabularyPage />} />
+                <Route path="contributions" element={<AdminContributionsPage />} />
+                <Route path="users" element={<AdminUsersPage />} />
+                <Route path="roles" element={<AdminRolesPage />} />
+                <Route path="analytics" element={<AdminAnalyticsPage />} />
+                <Route path="media" element={<AdminMediaPage />} />
+                <Route path="settings" element={<AdminSettingsPage />} />
+                <Route path="notifications" element={<AdminNotificationsPage />} />
+                <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+              </Route>
+
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </LearningProvider>
         </AuthProvider>
