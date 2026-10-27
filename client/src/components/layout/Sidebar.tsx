@@ -95,24 +95,26 @@ export const Sidebar: React.FC = () => {
             );
           })}
 
-          {/* Admin CMS Portal Shortcut */}
-          <NavLink
-            to="/admin"
-            className={({ isActive }) => `
-              flex items-center gap-3 px-3.5 py-2.5 xl:py-3 rounded-2xl font-bold text-xs xl:text-sm tracking-wide transition-all mt-2 border border-gold-400/40
-              ${
-                isActive
-                  ? 'bg-forest-800 text-gold-300 shadow-[0_3px_0_#0F281B]'
-                  : 'bg-gold-50/70 text-forest-900 hover:bg-gold-100/80 hover:text-forest-900'
-              }
-            `}
-          >
-            <ShieldCheck className="w-4 h-4 xl:w-5 xl:h-5 text-gold-600 shrink-0" />
-            <span className="flex-1">Admin Panel</span>
-            <span className="text-[10px] bg-gold-400/30 text-forest-800 px-1.5 py-0.5 rounded font-extrabold uppercase tracking-wider">
-              CMS
-            </span>
-          </NavLink>
+          {/* Admin CMS Portal Shortcut — ONLY visible to verified administrative staff */}
+          {user && user.role && user.role !== 'learner' && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) => `
+                flex items-center gap-3 px-3.5 py-2.5 xl:py-3 rounded-2xl font-bold text-xs xl:text-sm tracking-wide transition-all mt-2 border border-gold-400/40
+                ${
+                  isActive
+                    ? 'bg-forest-800 text-gold-300 shadow-[0_3px_0_#0F281B]'
+                    : 'bg-gold-50/70 text-forest-900 hover:bg-gold-100/80 hover:text-forest-900'
+                }
+              `}
+            >
+              <ShieldCheck className="w-4 h-4 xl:w-5 xl:h-5 text-gold-600 shrink-0" />
+              <span className="flex-1">Admin Panel</span>
+              <span className="text-[10px] bg-gold-400/30 text-forest-800 px-1.5 py-0.5 rounded font-extrabold uppercase tracking-wider">
+                CMS
+              </span>
+            </NavLink>
+          )}
         </nav>
       </div>
 

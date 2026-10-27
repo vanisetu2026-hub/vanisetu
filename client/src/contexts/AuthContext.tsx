@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile } from '../types';
+import { UserProfile, AdminRole } from '../types';
 import { auth, db, isFirebaseConfigured } from '../config/firebase';
 import {
   signInWithEmailAndPassword,
@@ -17,11 +17,20 @@ interface AuthContextType {
   loginAsGuest: () => void;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<UserProfile>) => Promise<void>;
+  elevateToAdmin: (passcode: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_USER_KEY = 'vanisetu_user_session';
+
+const ADMIN_ACCOUNTS: Record<string, AdminRole | undefined> = {
+  'admin@vanisetu.org': 'super_admin',
+  'priyanka@vanisetu.org': 'content_admin',
+  'shanti.reviewer@vanisetu.org': 'language_reviewer',
+  'birsa.mod@vanisetu.org': 'moderator',
+  'auditor@vanisetu.org': 'read_only_admin',
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -37,12 +46,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const docRef = doc(db, 'users', firebaseUser.uid);
               const docSnap = await getDoc(docRef);
               if (docSnap.exists()) {
-                setUser(docSnap.data() as UserProfile);
+                const profile = docSnap.data() as UserProfile;
+                const emailKey = profile.email.toLowerCase();
+                const role = profile.role || ADMIN_ACCOUNTS[emailKey] || 'learner';
+                setUser({ ...profile, role });
               } else {
+                const emailKey = (firebaseUser.email || '').toLowerCase();
+                const role = ADMIN_ACCOUNTS[emailKey] || 'learner';
                 const defaultProfile: UserProfile = {
                   uid: firebaseUser.uid,
                   name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Learner',
                   email: firebaseUser.email || '',
+                  role,
                   selectedLanguage: 'mundari',
                   totalXP: 50,
                   currentStreak: 1,
@@ -76,13 +91,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const localData = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
       if (localData) {
-        setUser(JSON.parse(localData));
+        const parsed = JSON.parse(localData) as UserProfile;
+        const emailKey = (parsed.email || '').toLowerCase();
+        // Check if admin key is also present
+        const hasAdminKey = sessionStorage.getItem('vanisetu_admin_key') === 'VANISETU_ADMIN_2026';
+        const role = hasAdminKey ? 'super_admin' : (parsed.role || ADMIN_ACCOUNTS[emailKey] || 'learner');
+        setUser({ ...parsed, role });
       } else {
-        // Create an initial learner profile for instant frictionless exploration
-        const guestUser: UserProfile = {
-          uid: 'guest_' + Math.random().toString(36).substring(2, 9),
+        // Create an initial learner profile for normal learning (role: 'learner')
+        const defaultLearner: UserProfile = {
+          uid: 'learner_' + Math.random().toString(36).substring(2, 9),
           name: 'Priyanka Munda',
           email: 'learner@vanisetu.org',
+          role: 'learner',
           selectedLanguage: 'mundari',
           totalXP: 70,
           currentStreak: 2,
@@ -93,8 +114,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           createdAt: new Date().toISOString(),
           isGuest: false,
         };
-        localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(guestUser));
-        setUser(guestUser);
+        localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(defaultLearner));
+        setUser(defaultLearner);
       }
     } catch {
       // Ignore
@@ -104,22 +125,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
+      const emailKey = email.toLowerCase().trim();
+      const detectedRole: AdminRole | 'learner' = ADMIN_ACCOUNTS[emailKey] || 'learner';
+
       if (isFirebaseConfigured && auth) {
         const userCred = await signInWithEmailAndPassword(auth, email, password);
         if (db) {
           const docSnap = await getDoc(doc(db, 'users', userCred.user.uid));
           if (docSnap.exists()) {
             const profile = docSnap.data() as UserProfile;
-            setUser(profile);
-            localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(profile));
+            const updatedProfile: UserProfile = { ...profile, role: profile.role || detectedRole };
+            setUser(updatedProfile);
+            localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(updatedProfile));
           }
         }
       } else {
-        // Fallback local auth for instant testing
+        // Local auth
         const profile: UserProfile = {
-          uid: 'usr_' + btoa(email).substring(0, 10),
-          name: email.split('@')[0].replace(/[^a-zA-Z]/g, ' ') || 'Learner',
-          email,
+          uid: 'usr_' + btoa(emailKey).substring(0, 10),
+          name: emailKey.split('@')[0].replace(/[^a-zA-Z]/g, ' ') || 'Learner',
+          email: emailKey,
+          role: detectedRole,
           selectedLanguage: 'mundari',
           totalXP: 100,
           currentStreak: 2,
@@ -133,6 +159,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(profile);
         localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(profile));
       }
+
+      if (detectedRole !== 'learner') {
+        sessionStorage.setItem('vanisetu_admin_key', 'VANISETU_ADMIN_2026');
+        localStorage.setItem('vanisetu_active_admin_role', detectedRole);
+      } else {
+        sessionStorage.removeItem('vanisetu_admin_key');
+      }
     } finally {
       setLoading(false);
     }
@@ -141,44 +174,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (name: string, email: string, password: string) => {
     setLoading(true);
     try {
+      const emailKey = email.toLowerCase().trim();
+      const detectedRole: AdminRole | 'learner' = ADMIN_ACCOUNTS[emailKey] || 'learner';
+
+      const newProfile: UserProfile = {
+        uid: 'usr_' + Math.random().toString(36).substring(2, 9),
+        name,
+        email: emailKey,
+        role: detectedRole,
+        selectedLanguage: 'mundari',
+        totalXP: 20,
+        currentStreak: 1,
+        longestStreak: 1,
+        dailyGoal: 50,
+        completedLessons: [],
+        unlockedAchievements: ['ach_first_steps'],
+        createdAt: new Date().toISOString(),
+        isGuest: false,
+      };
+
       if (isFirebaseConfigured && auth) {
         const userCred = await createUserWithEmailAndPassword(auth, email, password);
-        const newProfile: UserProfile = {
-          uid: userCred.user.uid,
-          name,
-          email,
-          selectedLanguage: 'mundari',
-          totalXP: 20,
-          currentStreak: 1,
-          longestStreak: 1,
-          dailyGoal: 50,
-          completedLessons: [],
-          unlockedAchievements: ['ach_first_steps'],
-          createdAt: new Date().toISOString(),
-          isGuest: false,
-        };
+        newProfile.uid = userCred.user.uid;
         if (db) {
           await setDoc(doc(db, 'users', userCred.user.uid), newProfile);
         }
-        setUser(newProfile);
-        localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(newProfile));
+      }
+
+      setUser(newProfile);
+      localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(newProfile));
+
+      if (detectedRole !== 'learner') {
+        sessionStorage.setItem('vanisetu_admin_key', 'VANISETU_ADMIN_2026');
+        localStorage.setItem('vanisetu_active_admin_role', detectedRole);
       } else {
-        const newProfile: UserProfile = {
-          uid: 'usr_' + Math.random().toString(36).substring(2, 9),
-          name,
-          email,
-          selectedLanguage: 'mundari',
-          totalXP: 20,
-          currentStreak: 1,
-          longestStreak: 1,
-          dailyGoal: 50,
-          completedLessons: [],
-          unlockedAchievements: ['ach_first_steps'],
-          createdAt: new Date().toISOString(),
-          isGuest: false,
-        };
-        setUser(newProfile);
-        localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(newProfile));
+        sessionStorage.removeItem('vanisetu_admin_key');
       }
     } finally {
       setLoading(false);
@@ -190,6 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       uid: 'guest_' + Math.random().toString(36).substring(2, 9),
       name: 'Guest Learner',
       email: 'guest@vanisetu.org',
+      role: 'learner',
       selectedLanguage: 'mundari',
       totalXP: 0,
       currentStreak: 1,
@@ -200,6 +231,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date().toISOString(),
       isGuest: true,
     };
+    sessionStorage.removeItem('vanisetu_admin_key');
     setUser(guestUser);
     localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(guestUser));
   };
@@ -208,6 +240,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isFirebaseConfigured && auth) {
       await signOut(auth);
     }
+    sessionStorage.removeItem('vanisetu_admin_key');
+    localStorage.removeItem('vanisetu_active_admin_role');
     localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
     setUser(null);
   };
@@ -227,6 +261,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const elevateToAdmin = (passcode: string): boolean => {
+    const validKeys = ['VANISETU_ADMIN_2026', 'vanisetu2026', 'admin2026'];
+    if (validKeys.includes(passcode.trim())) {
+      sessionStorage.setItem('vanisetu_admin_key', 'VANISETU_ADMIN_2026');
+      localStorage.setItem('vanisetu_active_admin_role', 'super_admin');
+      if (user) {
+        const updated: UserProfile = { ...user, role: 'super_admin' };
+        setUser(updated);
+        localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(updated));
+      }
+      return true;
+    }
+    return false;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -237,6 +286,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginAsGuest,
         logout,
         updateUser,
+        elevateToAdmin,
       }}
     >
       {children}

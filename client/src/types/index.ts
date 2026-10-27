@@ -5,6 +5,7 @@ export interface UserProfile {
   name: string;
   email: string;
   photoURL?: string;
+  role?: AdminRole | 'learner';
   selectedLanguage: string; // e.g., 'mundari', 'santali', 'ho', 'kurukh'
   totalXP: number;
   currentStreak: number;

@@ -34,10 +34,13 @@ const adminFetch = async (endpoint: string, options: RequestInit = {}) => {
     }
   }
 
+  const adminKey = sessionStorage.getItem('vanisetu_admin_key') || '';
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Authorization: authHeader,
     'x-admin-role': activeRole,
+    'x-admin-key': adminKey,
     ...((options.headers as Record<string, string>) || {}),
   };
 
