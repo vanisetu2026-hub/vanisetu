@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cream-200 text-teal-900 font-sans antialiased;
+  }
+
+  /* Custom scrollbar matching earthy palette */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #F7F5EB;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #BCD3C3;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #668A70;
+  }
+}

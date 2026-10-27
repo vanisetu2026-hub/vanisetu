@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if the requesting user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users Profile Collection
+    // Users can read any user profile (for leaderboard/social features)
+    // Users can only create and modify their own document
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false; // Profiles cannot be deleted directly from client
+    }
+    
+    // User Learning Progress & Streaks
+    match /userProgress/{progressId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid);
+      allow write: if isAuthenticated() && (request.resource.data.uid == request.auth.uid);
+    }
+    
+    // User Achievements
+    match /userAchievements/{achievementDocId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid);
+      allow create: if isAuthenticated() && (request.resource.data.uid == request.auth.uid);
+      allow update, delete: if false; // Once unlocked, achievements cannot be altered
+    }
+    
+    // Languages, Courses, Lessons, Exercises & Dictionary
+    // Public read-only for authenticated or guest learners; only admin can write
+    match /languages/{languageId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    match /lessons/{lessonId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    match /exercises/{exerciseId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    match /vocabulary/{vocabularyId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    match /achievements/{achievementId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // Community Contributions (Oral traditions, stories, folk songs)
+    // Anyone can read approved content
+    // Authenticated users can submit new content with 'pending' status
+    match /communityContributions/{contributionId} {
+      allow read: if resource.data.moderationStatus == 'approved' || (isAuthenticated() && resource.data.uid == request.auth.uid);
+      allow create: if isAuthenticated() 
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.moderationStatus in ['pending', 'approved'];
+      allow update: if isAuthenticated() 
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount']);
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+  }
+}
