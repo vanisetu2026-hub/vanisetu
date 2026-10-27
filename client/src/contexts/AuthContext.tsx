@@ -39,7 +39,7 @@ const ADMIN_ACCOUNTS: Record<string, AdminRole | undefined> = {
 
 const VALID_ADMIN_PASSWORDS = ['admin2026', 'vanisetu2026', 'VANISETU_ADMIN_2026'];
 
-// Helper to get all registered local accounts
+// Helper to get registered local accounts
 const getLocalAccounts = (): LocalAccountRecord[] => {
   try {
     const raw = localStorage.getItem(LOCAL_ACCOUNTS_KEY);
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
               }
             }
-            // Firebase authenticated but no docSnap yet:
+            // Firebase authenticated but initial doc not created yet:
             const emailKey = (firebaseUser.email || '').toLowerCase();
             const role = ADMIN_ACCOUNTS[emailKey] || 'learner';
             const defaultProfile: UserProfile = {
@@ -98,12 +98,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: firebaseUser.email || '',
               role,
               selectedLanguage: 'mundari',
-              totalXP: 50,
-              currentStreak: 1,
-              longestStreak: 1,
+              totalXP: 0,
+              currentStreak: 0,
+              longestStreak: 0,
               dailyGoal: 50,
               completedLessons: [],
-              unlockedAchievements: ['ach_first_steps'],
+              unlockedAchievements: [],
               createdAt: new Date().toISOString(),
               isGuest: false,
             };
@@ -141,27 +141,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const role = hasAdminKey ? 'super_admin' : (parsed.role || ADMIN_ACCOUNTS[emailKey] || 'learner');
         setUser({ ...parsed, role });
       } else {
-        // Create an initial learner profile for instant learning exploration
-        const defaultLearner: UserProfile = {
-          uid: 'learner_' + Math.random().toString(36).substring(2, 9),
-          name: 'Priyanka Munda',
-          email: 'learner@vanisetu.org',
-          role: 'learner',
-          selectedLanguage: 'mundari',
-          totalXP: 70,
-          currentStreak: 2,
-          longestStreak: 3,
-          dailyGoal: 50,
-          completedLessons: ['mun_l1'],
-          unlockedAchievements: ['ach_first_steps'],
-          createdAt: new Date().toISOString(),
-          isGuest: false,
-        };
-        localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(defaultLearner));
-        setUser(defaultLearner);
+        // No session stored — start clean as unauthenticated visitor
+        setUser(null);
       }
     } catch {
-      // Ignore
+      setUser(null);
     }
   };
 
@@ -180,9 +164,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: emailKey,
           role: detectedRole,
           selectedLanguage: 'santali',
-          totalXP: 1200,
-          currentStreak: 14,
-          longestStreak: 20,
+          totalXP: 0,
+          currentStreak: 0,
+          longestStreak: 0,
           dailyGoal: 50,
           completedLessons: [],
           unlockedAchievements: [],
@@ -196,7 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // 2. Check local accounts registry (offline / local development registration)
+      // 2. Check local accounts registry (offline / local registered accounts)
       const localAccounts = getLocalAccounts();
       const matchedLocal = localAccounts.find(
         (a) => a.email.toLowerCase() === emailKey && a.password === password
@@ -209,12 +193,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: matchedLocal.email,
           role: matchedLocal.role || detectedRole,
           selectedLanguage: matchedLocal.selectedLanguage || 'mundari',
-          totalXP: matchedLocal.totalXP || 50,
-          currentStreak: matchedLocal.currentStreak || 1,
-          longestStreak: matchedLocal.longestStreak || 1,
+          totalXP: matchedLocal.totalXP || 0,
+          currentStreak: matchedLocal.currentStreak || 0,
+          longestStreak: matchedLocal.longestStreak || 0,
           dailyGoal: matchedLocal.dailyGoal || 50,
           completedLessons: matchedLocal.completedLessons || [],
-          unlockedAchievements: matchedLocal.unlockedAchievements || ['ach_first_steps'],
+          unlockedAchievements: matchedLocal.unlockedAchievements || [],
           createdAt: matchedLocal.createdAt || new Date().toISOString(),
           isGuest: false,
         };
@@ -255,12 +239,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: emailKey,
             role: detectedRole,
             selectedLanguage: 'mundari',
-            totalXP: 50,
-            currentStreak: 1,
-            longestStreak: 1,
+            totalXP: 0,
+            currentStreak: 0,
+            longestStreak: 0,
             dailyGoal: 50,
             completedLessons: [],
-            unlockedAchievements: ['ach_first_steps'],
+            unlockedAchievements: [],
             createdAt: new Date().toISOString(),
             isGuest: false,
           };
@@ -278,7 +262,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (errCode === 'auth/invalid-email') {
             throw new Error('Please enter a valid email address.');
           }
-          // Check if email matched a local account with different password
+          // Check if email matched a local account with wrong password
           const emailMatched = localAccounts.find((a) => a.email.toLowerCase() === emailKey);
           if (emailMatched) {
             throw new Error('Incorrect password. Please verify your credentials.');
@@ -321,16 +305,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (errCode === 'auth/weak-password') {
             throw new Error('Password must be at least 6 characters long.');
           }
-          // If Firebase failed due to operation-not-allowed (auth provider not enabled in console)
-          // or network error, log and gracefully fall back to local account creation:
-          console.warn(
-            'Firebase createUser failed (falling back to seamless local account registration):',
-            firebaseErr
-          );
+          console.warn('Firebase createUser fallback to local storage:', firebaseErr);
         }
       }
 
-      // If Firebase was not used or failed with a non-duplicate error, ensure email isn't duplicated locally
       if (!firebaseUid && existingLocal) {
         throw new Error('An account with this email already exists. Please log in.');
       }
@@ -342,12 +320,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: emailKey,
         role: detectedRole,
         selectedLanguage: 'mundari',
-        totalXP: 25,
-        currentStreak: 1,
-        longestStreak: 1,
+        totalXP: 0,
+        currentStreak: 0,
+        longestStreak: 0,
         dailyGoal: 50,
         completedLessons: [],
-        unlockedAchievements: ['ach_first_steps'],
+        unlockedAchievements: [],
         createdAt: new Date().toISOString(),
         isGuest: false,
       };
@@ -357,11 +335,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           await setDoc(doc(db, 'users', firebaseUid), newProfile);
         } catch (firestoreErr) {
-          console.warn('Firestore setDoc warning (saved locally):', firestoreErr);
+          console.warn('Firestore setDoc warning:', firestoreErr);
         }
       }
 
-      // 3. Persist in local accounts registry so user can always log back in
+      // 3. Persist in local accounts registry
       saveLocalAccount({
         ...newProfile,
         password: password,
@@ -386,12 +364,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const guestUser: UserProfile = {
       uid: 'guest_' + Math.random().toString(36).substring(2, 9),
       name: 'Guest Learner',
-      email: 'guest@vanisetu.org',
+      email: '',
       role: 'learner',
       selectedLanguage: 'mundari',
       totalXP: 0,
-      currentStreak: 1,
-      longestStreak: 1,
+      currentStreak: 0,
+      longestStreak: 0,
       dailyGoal: 50,
       completedLessons: [],
       unlockedAchievements: [],
@@ -423,7 +401,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(updated);
     localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(updated));
 
-    // Update in local accounts registry as well
+    // Update in local accounts registry
     const accounts = getLocalAccounts();
     const idx = accounts.findIndex((a) => a.uid === user.uid);
     if (idx >= 0) {

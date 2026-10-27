@@ -24,11 +24,11 @@ const userProgressStore: Record<string, {
 const getOrCreateUser = (uid: string, name?: string) => {
   if (!userProgressStore[uid]) {
     userProgressStore[uid] = {
-      totalXP: 50,
-      currentStreak: 1,
-      longestStreak: 1,
-      completedLessons: ['mun_l1'],
-      unlockedAchievements: ['ach_first_steps'],
+      totalXP: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      completedLessons: [],
+      unlockedAchievements: [],
       name: name || 'Learner',
       dailyGoal: 50,
       selectedLanguage: 'mundari',
@@ -90,13 +90,13 @@ export const getLessonExercises = (req: AuthenticatedRequest, res: Response) => 
 
 // 4. Progress Controllers
 export const getProgress = (req: AuthenticatedRequest, res: Response) => {
-  const uid = req.user?.uid || 'guest_user_demo';
+  const uid = req.user?.uid || 'guest_learner';
   const progress = getOrCreateUser(uid, req.user?.name);
   res.json({ success: true, data: progress });
 };
 
 export const completeLesson = (req: AuthenticatedRequest, res: Response) => {
-  const uid = req.user?.uid || 'guest_user_demo';
+  const uid = req.user?.uid || 'guest_learner';
   const { lessonId, score, accuracy, xpEarned } = req.body;
 
   if (!lessonId) {
@@ -208,20 +208,20 @@ export const createContribution = (req: AuthenticatedRequest, res: Response) => 
 
 // 7. Profile Controllers
 export const getProfile = (req: AuthenticatedRequest, res: Response) => {
-  const uid = req.user?.uid || 'guest_user_demo';
+  const uid = req.user?.uid || 'guest_learner';
   const profile = getOrCreateUser(uid, req.user?.name);
   res.json({
     success: true,
     data: {
       uid,
-      email: req.user?.email || 'learner@vanisetu.org',
+      email: req.user?.email || '',
       ...profile,
     },
   });
 };
 
 export const updateProfile = (req: AuthenticatedRequest, res: Response) => {
-  const uid = req.user?.uid || 'guest_user_demo';
+  const uid = req.user?.uid || 'guest_learner';
   const profile = getOrCreateUser(uid, req.user?.name);
 
   const { name, dailyGoal, selectedLanguage } = req.body;
@@ -234,7 +234,7 @@ export const updateProfile = (req: AuthenticatedRequest, res: Response) => {
     message: 'Profile updated',
     data: {
       uid,
-      email: req.user?.email || 'learner@vanisetu.org',
+      email: req.user?.email || '',
       ...profile,
     },
   });

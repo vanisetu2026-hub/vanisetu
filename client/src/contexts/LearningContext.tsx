@@ -55,9 +55,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(LOCAL_FAVORITES_KEY);
-      return saved ? JSON.parse(saved) : ['dict_mun_1', 'dict_san_1'];
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return ['dict_mun_1'];
+      return [];
     }
   });
 

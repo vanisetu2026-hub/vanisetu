@@ -41,7 +41,7 @@ export const DashboardPage: React.FC = () => {
   const progressPercent = Math.round((completedCount / (lessons.length || 1)) * 100);
 
   const dailyGoalXP = user?.dailyGoal || 50;
-  const dailyProgressXP = Math.min(dailyGoalXP, user?.totalXP ? user.totalXP % 100 : 15);
+  const dailyProgressXP = Math.min(dailyGoalXP, user?.totalXP ? user.totalXP % (dailyGoalXP || 50) : 0);
 
   // Unit 1 Guidebook phrases tailored to selected language
   const getGuidebookPhrases = () => {
@@ -301,13 +301,17 @@ export const DashboardPage: React.FC = () => {
 
             <div className="pt-3 border-t border-sage-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-terracotta-500 fill-current animate-bounce" />
+                <Flame className={`w-4 h-4 ${(user?.currentStreak || 0) > 0 ? 'text-terracotta-500 fill-current animate-bounce' : 'text-teal-400'}`} />
                 <span className="text-xs font-bold text-teal-800">
-                  {user?.currentStreak || 1} Day Streak
+                  {user?.currentStreak || 0} Day Streak
                 </span>
               </div>
-              <span className="text-[11px] font-bold text-terracotta-600 bg-terracotta-50 px-2 py-0.5 rounded-full border border-terracotta-200">
-                Active Fire 🔥
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                (user?.currentStreak || 0) > 0
+                  ? 'text-terracotta-600 bg-terracotta-50 border-terracotta-200'
+                  : 'text-teal-600 bg-cream-200 border-sage-200'
+              }`}>
+                {(user?.currentStreak || 0) > 0 ? 'Active Fire 🔥' : 'Start Today'}
               </span>
             </div>
           </div>

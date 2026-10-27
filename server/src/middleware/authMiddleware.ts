@@ -17,10 +17,10 @@ export const authenticateUser = async (
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    // Check if guest token or dev bypass
+    // Guest or anonymous session
     req.user = {
-      uid: 'guest_user_demo',
-      email: 'guest@vanisetu.org',
+      uid: 'guest_anonymous',
+      email: '',
       name: 'Guest Learner',
     };
     return next();
@@ -44,9 +44,9 @@ export const authenticateUser = async (
 
   // Fallback: extract payload or assign session user
   req.user = {
-    uid: 'learner_' + token.substring(0, 10),
-    email: 'learner@vanisetu.org',
-    name: 'Tribal Learner',
+    uid: 'user_' + token.substring(0, 10),
+    email: '',
+    name: 'Learner',
   };
   next();
 };

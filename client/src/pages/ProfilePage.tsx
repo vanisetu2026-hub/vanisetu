@@ -41,16 +41,24 @@ export const ProfilePage: React.FC = () => {
     });
   };
 
-  // Mock weekly learning activity chart
-  const daysOfWeek = [
-    { day: 'Mon', xp: 40, active: true },
-    { day: 'Tue', xp: 50, active: true },
-    { day: 'Wed', xp: 30, active: true },
-    { day: 'Thu', xp: 60, active: true },
-    { day: 'Fri', xp: 20, active: true },
-    { day: 'Sat', xp: 45, active: false },
-    { day: 'Sun', xp: 25, active: false },
-  ];
+  // Real weekly learning activity based on user progress
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const todayDayIndex = (new Date().getDay() + 6) % 7; // 0 for Mon, 6 for Sun
+  const currentStreak = user?.currentStreak || 0;
+  const userXP = user?.totalXP || 0;
+  const dailyTarget = user?.dailyGoal || 50;
+
+  const daysOfWeek = dayLabels.map((day, idx) => {
+    const isToday = idx === todayDayIndex;
+    const isActive = isToday ? userXP > 0 : idx < todayDayIndex && idx >= todayDayIndex - Math.max(0, currentStreak - 1);
+    const xp = isToday ? Math.min(userXP, dailyTarget) : (isActive ? dailyTarget : 0);
+    return {
+      day,
+      xp,
+      active: isActive && xp > 0,
+      isToday,
+    };
+  });
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto py-2">
@@ -143,7 +151,7 @@ export const ProfilePage: React.FC = () => {
             <Flame className="w-5 h-5 fill-current" />
           </div>
           <span className="text-2xl sm:text-3xl font-extrabold font-display text-teal-950">
-            {user?.currentStreak || 1}
+            {user?.currentStreak || 0}
           </span>
           <span className="text-[11px] font-bold text-teal-600 uppercase tracking-wider block mt-0.5">
             Day Streak
@@ -169,7 +177,7 @@ export const ProfilePage: React.FC = () => {
             <Trophy className="w-5 h-5" />
           </div>
           <span className="text-2xl sm:text-3xl font-extrabold font-display text-teal-950">
-            {user?.longestStreak || 3}
+            {user?.longestStreak || 0}
           </span>
           <span className="text-[11px] font-bold text-teal-600 uppercase tracking-wider block mt-0.5">
             Best Streak
@@ -194,22 +202,24 @@ export const ProfilePage: React.FC = () => {
         {/* Bar chart */}
         <div className="pt-4 flex items-end justify-between gap-3 h-40 border-b border-sage-300 pb-2">
           {daysOfWeek.map((item, idx) => {
-            const barHeight = Math.min(100, (item.xp / 60) * 100);
+            const barHeight = item.xp > 0 ? Math.min(100, Math.max(12, (item.xp / dailyTarget) * 100)) : 6;
             return (
               <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
                 <div
                   className={`w-full max-w-[40px] rounded-t-xl transition-all duration-500 relative group ${
                     item.active
-                      ? 'bg-gradient-to-t from-forest-600 to-forest-500'
+                      ? 'bg-gradient-to-t from-forest-600 to-forest-500 shadow-sm'
                       : 'bg-cream-300'
                   }`}
                   style={{ height: `${barHeight}%` }}
                 >
                   <div className="opacity-0 group-hover:opacity-100 absolute -top-7 left-1/2 -translate-x-1/2 bg-teal-950 text-cream-50 text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none transition-opacity">
-                    {item.xp}XP
+                    {item.xp} XP
                   </div>
                 </div>
-                <span className="text-xs font-bold text-teal-700">{item.day}</span>
+                <span className={`text-xs font-bold ${item.isToday ? 'text-forest-700 underline font-extrabold' : 'text-teal-700'}`}>
+                  {item.day}
+                </span>
               </div>
             );
           })}
@@ -223,7 +233,7 @@ export const ProfilePage: React.FC = () => {
             Achievements & Badges
           </h3>
           <span className="text-xs font-bold text-teal-600">
-            Unlocked {user?.unlockedAchievements.length || 1} of {ACHIEVEMENTS.length}
+            Unlocked {user?.unlockedAchievements?.length || 0} of {ACHIEVEMENTS.length}
           </span>
         </div>
 
