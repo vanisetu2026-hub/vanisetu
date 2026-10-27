@@ -13,24 +13,28 @@ export const Navbar: React.FC<{ isLanding?: boolean }> = ({ isLanding = false })
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-40 bg-cream-100/90 backdrop-blur-md border-b-2 border-sage-200/80 px-4 sm:px-8 py-3.5 transition-all">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <header className="sticky top-0 z-40 bg-cream-100/95 backdrop-blur-md border-b-2 border-sage-200/80 px-3 sm:px-6 lg:px-8 py-2 sm:py-3 transition-all">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
         {/* Left: Logo */}
-        <Logo size="md" showTagline={!isLanding} />
+        <Logo
+          size="md"
+          showTagline={!isLanding}
+          className="shrink-0"
+        />
 
-        {/* Center / Right Controls */}
-        <div className="flex items-center gap-3 sm:gap-5">
+        {/* Right Controls */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {user ? (
             <>
-              {/* Selected Language Selector Pill */}
+              {/* Selected Language Selector Pill (Hidden on mobile, visible from sm up) */}
               <button
                 onClick={() => navigate('/languages')}
-                className="hidden sm:flex items-center gap-2 bg-cream-50 hover:bg-cream-200 border-2 border-sage-300 px-3 py-1.5 rounded-2xl text-xs font-bold text-teal-800 transition-colors shadow-sm"
+                className="hidden md:flex items-center gap-2 bg-cream-50 hover:bg-cream-200 border-2 border-sage-300 px-3 py-1.5 rounded-2xl text-xs font-bold text-teal-800 transition-colors shadow-sm"
                 title="Change active tribal language"
               >
-                <Globe2 className="w-4 h-4 text-forest-600" />
+                <Globe2 className="w-3.5 h-3.5 text-forest-600" />
                 <span>{selectedLanguage.name}</span>
-                <span className="text-[10px] bg-forest-100 text-forest-700 px-1.5 py-0.5 rounded-md">
+                <span className="text-[10px] bg-forest-100 text-forest-700 px-1.5 py-0.5 rounded-md font-extrabold">
                   Active
                 </span>
               </button>
@@ -41,46 +45,46 @@ export const Navbar: React.FC<{ isLanding?: boolean }> = ({ isLanding = false })
               {/* XP */}
               <XPBadge xp={user.totalXP || 0} size="sm" />
 
-              {/* Reminders / Notifications button */}
+              {/* Reminders / Notifications button (Hidden on phone screen to guarantee zero clipping, visible from sm up) */}
               <button
                 onClick={() => navigate('/reminders')}
-                className="p-2 rounded-2xl hover:bg-cream-200 text-teal-700 hover:text-teal-900 transition-colors relative"
+                className="hidden sm:flex p-1.5 sm:p-2 rounded-2xl hover:bg-cream-200 text-teal-700 hover:text-teal-900 transition-colors relative"
                 title="Daily Reminders & Habits"
                 aria-label="Daily reminders"
               >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-gold-400 rounded-full" />
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="absolute top-1 sm:top-1.5 right-1 sm:right-1.5 w-2 h-2 bg-gold-400 rounded-full" />
               </button>
 
               {/* Profile Avatar */}
               <Link
                 to="/profile"
-                className="flex items-center gap-2 pl-1 group"
+                className="flex items-center gap-2 pl-0.5 group"
                 title="View Profile"
               >
-                <div className="w-9 h-9 rounded-2xl bg-forest-600 border-2 border-forest-700 text-cream-100 font-bold flex items-center justify-center text-sm shadow-sm group-hover:scale-105 transition-transform">
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-2xl bg-forest-600 border-2 border-forest-700 text-cream-100 font-bold flex items-center justify-center text-xs sm:text-sm shadow-sm group-hover:scale-105 transition-transform">
                   {user.name ? user.name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
                 </div>
               </Link>
             </>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 to="/languages"
-                className="hidden md:inline-flex text-sm font-bold text-teal-800 hover:text-forest-600 px-3 py-2 transition-colors"
+                className="hidden md:inline-flex text-xs sm:text-sm font-bold text-teal-800 hover:text-forest-600 px-3 py-2 transition-colors"
               >
                 Explore Languages
               </Link>
               <Link
                 to="/login"
-                className="inline-flex items-center gap-1.5 text-sm font-bold bg-cream-50 hover:bg-cream-200 text-forest-700 border-2 border-forest-600 px-4 py-2 rounded-2xl transition-colors shadow-sm"
+                className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold bg-cream-50 hover:bg-cream-200 text-forest-700 border-2 border-forest-600 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl transition-colors shadow-sm"
               >
-                <LogIn className="w-4 h-4" />
+                <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span>Log In</span>
               </Link>
               <Link
                 to="/signup"
-                className="inline-flex items-center text-sm font-bold bg-gold-400 hover:bg-gold-300 text-teal-900 px-4 py-2 rounded-2xl shadow-[0_3px_0_#CF841C] active:translate-y-0.5 active:shadow-none transition-all"
+                className="inline-flex items-center text-xs sm:text-sm font-bold bg-gold-400 hover:bg-gold-300 text-teal-900 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl shadow-[0_3px_0_#CF841C] active:translate-y-0.5 active:shadow-none transition-all"
               >
                 Get Started
               </Link>

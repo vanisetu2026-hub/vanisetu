@@ -29,7 +29,7 @@ export const AppLayout: React.FC = () => {
       <div className="min-h-screen bg-cream-200 text-teal-900 flex flex-col font-sans">
         <Navbar isLanding={true} />
         <ToastNotification />
-        <main className="flex-1 flex items-center justify-center p-4">
+        <main className="flex-1 flex items-center justify-center p-3 sm:p-4">
           <Outlet />
         </main>
       </div>
@@ -51,10 +51,10 @@ export const AppLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-cream-200 text-teal-900 flex font-sans">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-24 lg:pb-8">
         <Navbar />
         <ToastNotification />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full mx-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-6xl xl:max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
         <MobileBottomNav />

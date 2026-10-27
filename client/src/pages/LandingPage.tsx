@@ -73,21 +73,21 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col justify-between">
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-8 pb-16 sm:py-20 px-6 sm:px-8 max-w-7xl mx-auto w-full">
+      <section className="relative overflow-hidden pt-6 pb-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         {/* Cultural Geometric Border Accent */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <CulturalPattern variant="strip" color="#214B32" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Text Column */}
-          <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 bg-cream-100 border-2 border-forest-300 px-4 py-1.5 rounded-full text-xs font-bold text-forest-800 shadow-sm">
-              <Sparkles className="w-4 h-4 text-gold-500 fill-gold-500" />
+          <div className="lg:col-span-7 space-y-4 sm:space-y-6 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 bg-cream-100 border-2 border-forest-300 px-3.5 py-1.5 rounded-full text-xs font-bold text-forest-800 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gold-500 fill-gold-500" />
               <span>A Digital Bridge for Tribal Languages</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold font-display text-forest-800 tracking-tight leading-[1.08]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold font-display text-forest-800 tracking-tight leading-[1.1]">
               Because every <br />
               <span className="text-gold-500 underline decoration-forest-400 decoration-wavy decoration-2">
                 language
@@ -95,20 +95,20 @@ export const LandingPage: React.FC = () => {
               carries a culture.
             </h1>
 
-            <p className="text-lg sm:text-xl text-teal-800 font-medium max-w-2xl leading-relaxed mx-auto lg:mx-0">
+            <p className="text-sm sm:text-lg lg:text-xl text-teal-800 font-medium max-w-2xl leading-relaxed mx-auto lg:mx-0">
               Learn tribal languages from the basics and help preserve the rich culture, stories,
               and heritage behind them. Interactive Duolingo-style lessons for Mundari, Santali,
               Ho, and Kurukh.
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-1 sm:pt-2">
               <Link to="/learn" className="w-full sm:w-auto">
                 <Button
                   variant="gold"
-                  size="xl"
+                  size="lg"
                   fullWidth={true}
-                  icon={<ArrowRight className="w-5 h-5" />}
+                  icon={<ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />}
                   iconPosition="right"
                 >
                   Start Learning Free
@@ -116,32 +116,32 @@ export const LandingPage: React.FC = () => {
               </Link>
 
               <Link to="/languages" className="w-full sm:w-auto">
-                <Button variant="outline" size="xl" fullWidth={true}>
+                <Button variant="outline" size="lg" fullWidth={true}>
                   Explore Languages
                 </Button>
               </Link>
             </div>
 
             {/* Trust points */}
-            <div className="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs font-bold text-teal-700">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-forest-600" />
-                <span>100% Free & Open Heritage</span>
+            <div className="pt-2 sm:pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-6 text-[11px] sm:text-xs font-bold text-teal-700">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-600 shrink-0" />
+                <span>100% Free & Open</span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-forest-600" />
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-600 shrink-0" />
                 <span>Native Elder Verified</span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-forest-600" />
-                <span>No Credit Card Needed</span>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-600 shrink-0" />
+                <span>Zero Ads</span>
               </div>
             </div>
           </div>
 
           {/* Right Hero Illustration: Culturally Respectful Landscape & Digital Bridge */}
           <div className="lg:col-span-5 flex justify-center">
-            <div className="relative w-full max-w-md aspect-square bg-gradient-to-b from-forest-50 via-cream-100 to-cream-200 rounded-3xl p-6 border-3 border-sage-300 shadow-earthy-lg overflow-hidden flex flex-col items-center justify-center text-center">
+            <div className="relative w-full max-w-[320px] sm:max-w-md aspect-square bg-gradient-to-b from-forest-50 via-cream-100 to-cream-200 rounded-3xl p-4 sm:p-6 border-2 sm:border-3 border-sage-300 shadow-earthy-lg overflow-hidden flex flex-col items-center justify-center text-center">
               {/* Stylized SVG Tribal Scenery */}
               <svg viewBox="0 0 400 400" className="w-full h-full drop-shadow-sm">
                 {/* Sun and Sky */}
@@ -181,7 +181,7 @@ export const LandingPage: React.FC = () => {
                 <circle cx="200" cy="298" r="6" fill="#E9A23B" />
               </svg>
 
-              <div className="absolute bottom-4 left-4 right-4 bg-cream-50/90 backdrop-blur-sm p-3 rounded-2xl border border-sage-200 shadow-sm text-xs font-bold text-teal-900">
+              <div className="absolute bottom-3 sm:bottom-4 left-3 right-3 sm:left-4 sm:right-4 bg-cream-50/90 backdrop-blur-sm p-2 sm:p-3 rounded-2xl border border-sage-200 shadow-sm text-[11px] sm:text-xs font-bold text-teal-900">
                 <span>Connecting Generations Through Digital Preservation</span>
               </div>
             </div>
@@ -189,20 +189,20 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Language Quick Strip */}
-      <section className="bg-forest-600 text-cream-100 py-6 px-6 sm:px-8 border-y-4 border-gold-400">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <Globe2 className="w-7 h-7 text-gold-400" />
+      {/* Language Quick Strip (Swipable on mobile) */}
+      <section className="bg-forest-600 text-cream-100 py-4 sm:py-6 px-4 sm:px-6 lg:px-8 border-y-4 border-gold-400">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <Globe2 className="w-6 h-6 sm:w-7 sm:h-7 text-gold-400 shrink-0" />
             <div>
-              <h4 className="font-display font-extrabold text-lg text-cream-50 leading-none">
+              <h4 className="font-display font-extrabold text-base sm:text-lg text-cream-50 leading-none">
                 Supported Indigenous Languages
               </h4>
-              <p className="text-xs text-cream-200 mt-0.5">Verified sample courses ready to explore</p>
+              <p className="text-[11px] sm:text-xs text-cream-200 mt-0.5">Verified sample courses ready to explore</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto pb-1 md:pb-0 touch-pan-x">
             {[
               { name: 'Mundari', script: 'मुंडारी' },
               { name: 'Santali', script: 'ᱥᱟᱱᱛᱟᱲᱤ' },
@@ -212,10 +212,10 @@ export const LandingPage: React.FC = () => {
               <Link
                 key={lang.name}
                 to="/languages"
-                className="bg-forest-700/80 hover:bg-forest-800 border border-forest-500 px-4 py-2 rounded-2xl transition-all flex items-center gap-2 group"
+                className="bg-forest-700/80 hover:bg-forest-800 border border-forest-500 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl transition-all flex items-center gap-1.5 shrink-0 group"
               >
-                <span className="font-bold text-cream-50 text-sm">{lang.name}</span>
-                <span className="text-xs text-gold-300 font-medium">({lang.script})</span>
+                <span className="font-bold text-cream-50 text-xs sm:text-sm">{lang.name}</span>
+                <span className="text-[10px] sm:text-xs text-gold-300 font-medium">({lang.script})</span>
               </Link>
             ))}
           </div>
@@ -223,38 +223,38 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* 8 Feature Cards Section */}
-      <section className="py-20 px-6 sm:px-8 max-w-7xl mx-auto w-full">
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-          <span className="text-xs font-extrabold uppercase tracking-widest text-forest-700 bg-forest-100 px-4 py-1.5 rounded-full">
+      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16 space-y-2 sm:space-y-3">
+          <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-widest text-forest-700 bg-forest-100 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full">
             Complete Learning Platform
           </span>
-          <h2 className="text-3xl sm:text-5xl font-extrabold font-display text-teal-950">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold font-display text-teal-950 leading-tight">
             Engineered for Fluency & Heritage Preservation
           </h2>
-          <p className="text-base sm:text-lg text-teal-700 font-medium">
+          <p className="text-sm sm:text-base lg:text-lg text-teal-700 font-medium">
             Everything you need to learn tribal languages from zero, understand native pronunciations,
             and explore centuries of oral wisdom.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {features.map((feat, index) => {
             const Icon = feat.icon;
             return (
               <div
                 key={index}
-                className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-6 sm:p-7 shadow-earthy hover:shadow-earthy-lg hover:-translate-y-1.5 transition-all duration-200 flex flex-col justify-between"
+                className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-5 sm:p-7 shadow-earthy hover:shadow-earthy-lg hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between"
               >
                 <div>
                   <div
-                    className={`w-12 h-12 rounded-2xl ${feat.color} flex items-center justify-center mb-5 shadow-sm`}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl ${feat.color} flex items-center justify-center mb-4 sm:mb-5 shadow-sm`}
                   >
-                    <Icon className="w-6 h-6" />
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
-                  <h3 className="font-display font-extrabold text-xl text-teal-950 mb-2">
+                  <h3 className="font-display font-extrabold text-lg sm:text-xl text-teal-950 mb-1.5 sm:mb-2">
                     {feat.title}
                   </h3>
-                  <p className="text-sm text-teal-700 font-medium leading-relaxed">
+                  <p className="text-xs sm:text-sm text-teal-700 font-medium leading-relaxed">
                     {feat.desc}
                   </p>
                 </div>
@@ -265,20 +265,20 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Cultural Mission Callout */}
-      <section className="py-16 px-6 sm:px-8 bg-cream-100 border-y-2 border-sage-200">
-        <div className="max-w-5xl mx-auto text-center space-y-6">
-          <Heart className="w-10 h-10 text-terracotta-500 mx-auto fill-current animate-pulse" />
-          <h2 className="text-3xl sm:text-4xl font-extrabold font-display text-forest-800">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-cream-100 border-y-2 border-sage-200">
+        <div className="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6">
+          <Heart className="w-8 h-8 sm:w-10 sm:h-10 text-terracotta-500 mx-auto fill-current animate-pulse" />
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-display text-forest-800">
             Preserving Voices Before They Fade
           </h2>
-          <p className="text-base sm:text-lg text-teal-800 font-medium leading-relaxed max-w-3xl mx-auto">
+          <p className="text-xs sm:text-base lg:text-lg text-teal-800 font-medium leading-relaxed max-w-2xl mx-auto">
             According to UNESCO, indigenous languages across the world are disappearing at alarming rates.
             VANISETU bridges this gap with technology, empowering youth, educators, and communities to learn
             and document their heritage with pride.
           </p>
           <div className="pt-2">
             <Link to="/signup">
-              <Button variant="gold" size="xl">
+              <Button variant="gold" size="lg">
                 Join the Movement
               </Button>
             </Link>

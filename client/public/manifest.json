@@ -1,0 +1,22 @@
+{
+  "name": "VANISETU",
+  "short_name": "VANISETU",
+  "description": "Learn • Preserve • Connect | Tribal Language Learning",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F5EB",
+  "theme_color": "#214B32",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

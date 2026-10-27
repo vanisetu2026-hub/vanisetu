@@ -5,12 +5,13 @@
 @layer base {
   body {
     @apply bg-cream-200 text-teal-900 font-sans antialiased;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Custom scrollbar matching earthy palette */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -24,5 +25,21 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: #668A70;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar for mobile filter strips while keeping swipe scroll functional */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Safe area padding for mobile home indicator */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 }

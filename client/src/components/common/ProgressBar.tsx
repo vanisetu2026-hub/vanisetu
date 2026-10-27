@@ -4,7 +4,7 @@ interface ProgressBarProps {
   current: number;
   total: number;
   color?: 'gold' | 'forest' | 'sage';
-  height?: 'sm' | 'md' | 'lg';
+  height?: 'xs' | 'sm' | 'md' | 'lg';
   showPercentage?: boolean;
   className?: string;
 }
@@ -20,6 +20,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   const percentage = Math.min(100, Math.max(0, total > 0 ? (current / total) * 100 : 0));
 
   const heightClasses = {
+    xs: 'h-1.5',
     sm: 'h-2',
     md: 'h-3.5',
     lg: 'h-5',
