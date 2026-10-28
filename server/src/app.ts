@@ -33,6 +33,14 @@ app.get('/health', (_req, res) => {
 app.use('/api/admin', adminRoutes);
 app.use('/api', apiRoutes);
 
+// 404 handler for unmatched API routes
+app.use((req: express.Request, res: express.Response) => {
+  res.status(404).json({
+    success: false,
+    message: `API route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
 // Error Handling Middleware
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled Server Error:', err);

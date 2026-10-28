@@ -26,7 +26,10 @@ import {
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  (window.location.hostname === 'localhost' ? 'http://localhost:5000/api/admin' : '/api/admin');
+  (import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/admin` : undefined) ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:5000/api/admin'
+    : '/api/admin');
 
 // -------------------------------------------------------------
 // HYBRID LOCAL STORE

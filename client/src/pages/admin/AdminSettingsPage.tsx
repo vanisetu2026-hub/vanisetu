@@ -7,6 +7,7 @@ import {
   Award,
   Globe,
   CheckCircle,
+  AlertCircle,
   HelpCircle,
   Shield,
   Layers,
@@ -164,7 +165,11 @@ export const AdminSettingsPage: React.FC = () => {
             }`}
           >
             <div className="flex items-center gap-1.5 font-bold mb-1">
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
+              {seedResult.success ? (
+                <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              )}
               <span>{seedResult.message}</span>
             </div>
             {seedResult.success && (
