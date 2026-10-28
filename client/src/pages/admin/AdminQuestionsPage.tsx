@@ -911,12 +911,20 @@ export const AdminQuestionsPage: React.FC = () => {
                       key={idx}
                       type="button"
                       onClick={() => {
-                        setPreviewAnswer(opt);
+                        if (previewQuestion.questionType === 'multiple_select') {
+                          const current = previewAnswer ? previewAnswer.split(',').map((s) => s.trim()).filter(Boolean) : [];
+                          const updated = current.includes(opt) ? current.filter((x) => x !== opt) : [...current, opt];
+                          setPreviewAnswer(updated.join(', '));
+                        } else {
+                          setPreviewAnswer(opt);
+                        }
                         setPreviewChecked(false);
                       }}
                       className={`text-left px-4 py-3 rounded-xl border text-sm font-medium transition ${
-                        previewAnswer === opt
-                          ? 'border-vanisetu-primary bg-vanisetu-primary/10 text-vanisetu-primary shadow-sm'
+                        (previewQuestion.questionType === 'multiple_select'
+                          ? previewAnswer.split(',').map((s) => s.trim()).includes(opt)
+                          : previewAnswer === opt)
+                          ? 'border-vanisetu-primary bg-vanisetu-primary/10 text-vanisetu-primary shadow-sm font-bold'
                           : 'border-gray-200 bg-white hover:border-vanisetu-primary/40'
                       }`}
                     >

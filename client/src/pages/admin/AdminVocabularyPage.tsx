@@ -181,10 +181,16 @@ export const AdminVocabularyPage: React.FC = () => {
       if (!Array.isArray(parsed)) {
         throw new Error('Import data must be a JSON array of vocabulary items.');
       }
+      let importedCount = 0;
       for (const item of parsed) {
-        await adminApi.createVocabulary(item);
+        try {
+          await adminApi.createVocabulary(item);
+          importedCount++;
+        } catch (itemErr) {
+          console.warn('Could not import entry:', item, itemErr);
+        }
       }
-      setImportStatus(`Imported ${parsed.length} entries successfully!`);
+      setImportStatus(`Imported ${importedCount} of ${parsed.length} entries successfully!`);
       setTimeout(() => {
         setShowImportModal(false);
         setImportStatus(null);

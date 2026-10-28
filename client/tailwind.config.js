@@ -7,6 +7,21 @@ export default {
   theme: {
     extend: {
       colors: {
+        vanisetu: {
+          primary: {
+            DEFAULT: '#214B32', // forest-600 brand primary
+            dark: '#1A3C28', // forest-700
+          },
+          accent: {
+            DEFAULT: '#E9A23B', // gold-400
+            dark: '#CF841C', // gold-500
+          },
+          cream: {
+            DEFAULT: '#F7F5EB', // cream-200
+            dark: '#EDE9D6', // cream-300
+          },
+          'text-muted': '#54888D', // muted teal/slate
+        },
         forest: {
           DEFAULT: '#214B32',
           50: '#F0F5F2',
