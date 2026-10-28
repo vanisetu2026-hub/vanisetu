@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Logo } from '../common/Logo';
 import { XPBadge } from '../common/XPBadge';
 import { StreakBadge } from '../common/StreakBadge';
+import { UserAvatar } from '../common/UserAvatar';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLearning } from '../../contexts/LearningContext';
 import { Globe2, User, Bell, LogIn, ShieldCheck } from 'lucide-react';
@@ -95,15 +96,13 @@ export const Navbar: React.FC<{ isLanding?: boolean }> = ({ isLanding = false })
                 className="flex items-center gap-2 pl-0.5 group"
                 title="View Profile"
               >
-                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-2xl bg-forest-600 border-2 border-forest-700 text-cream-100 font-bold flex items-center justify-center text-xs sm:text-sm shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt={user.name || 'User avatar'} className="w-full h-full object-cover" />
-                  ) : user.name ? (
-                    user.name.charAt(0).toUpperCase()
-                  ) : (
-                    <User className="w-4 h-4" />
-                  )}
-                </div>
+                <UserAvatar
+                  name={user.name}
+                  email={user.email}
+                  photoURL={user.photoURL}
+                  size="sm"
+                  className="group-hover:scale-105 transition-transform"
+                />
               </Link>
             </>
           ) : (
