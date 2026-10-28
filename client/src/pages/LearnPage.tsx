@@ -35,25 +35,6 @@ export const LearnPage: React.FC = () => {
   // Load 3 Sections (each with 8 units) tailored to current tribal language
   const sections: Section[] = getCurriculumSections(selectedLanguage.languageId);
 
-  // Active Section state (default to Section 1)
-  const [activeSectionId, setActiveSectionId] = useState<string>(
-    `${selectedLanguage.languageId}_sec_1`
-  );
-
-  // If language changes, sync active section
-  useEffect(() => {
-    setActiveSectionId(`${selectedLanguage.languageId}_sec_1`);
-  }, [selectedLanguage.languageId]);
-
-  const currentSection =
-    sections.find((s) => s.sectionId === activeSectionId) || sections[0];
-
-  // Modals state
-  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
-  const [selectedGuidebookUnit, setSelectedGuidebookUnit] = useState<Unit | null>(null);
-  const [selectedChestNode, setSelectedChestNode] = useState<PathNode | null>(null);
-  const [selectedScriptNode, setSelectedScriptNode] = useState<PathNode | null>(null);
-
   // Claimed chests & completed script nodes (persistent in localStorage)
   const [claimedChests, setClaimedChests] = useState<string[]>(() => {
     try {
@@ -72,9 +53,6 @@ export const LearnPage: React.FC = () => {
       return [];
     }
   });
-
-  // Reference for active lesson to scroll to
-  const activeNodeRef = useRef<HTMLDivElement | null>(null);
 
   // Check node completed state (checks context state, localStorage fallback, and user profile)
   const isNodeCompleted = (node: PathNode): boolean => {
@@ -97,6 +75,65 @@ export const LearnPage: React.FC = () => {
     }
     return false;
   };
+
+  // Determine initial active section:
+  // 1. Saved preference for this language
+  // 2. Or the first section that contains an uncompleted unlocked lesson
+  const getInitialSectionId = (): string => {
+    try {
+      const saved = localStorage.getItem(`vanisetu_active_section_${selectedLanguage.languageId}`);
+      if (saved && sections.some((s) => s.sectionId === saved)) {
+        return saved;
+      }
+      for (const sec of sections) {
+        const hasPending = sec.units.some((u) =>
+          u.nodes.some(
+            (n) => (n.type === 'lesson' || n.type === 'trophy') && !isNodeCompleted(n)
+          )
+        );
+        if (hasPending) {
+          return sec.sectionId;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+    return sections[0]?.sectionId || `${selectedLanguage.languageId}_sec_1`;
+  };
+
+  // Active Section state
+  const [activeSectionId, setActiveSectionId] = useState<string>(getInitialSectionId);
+
+  // References for active unit, active lesson node, path container, and user interaction
+  const activeUnitRef = useRef<HTMLDivElement | null>(null);
+  const activeNodeRef = useRef<HTMLDivElement | null>(null);
+  const pathContainerRef = useRef<HTMLDivElement | null>(null);
+  const userHasInteractedRef = useRef<boolean>(false);
+
+  // If language changes, sync active section
+  useEffect(() => {
+    setActiveSectionId(getInitialSectionId());
+    userHasInteractedRef.current = false;
+  }, [selectedLanguage.languageId]);
+
+  const handleSelectSection = (sectionId: string) => {
+    setActiveSectionId(sectionId);
+    try {
+      localStorage.setItem(`vanisetu_active_section_${selectedLanguage.languageId}`, sectionId);
+    } catch {
+      // ignore
+    }
+    userHasInteractedRef.current = false;
+  };
+
+  const currentSection =
+    sections.find((s) => s.sectionId === activeSectionId) || sections[0];
+
+  // Modals state
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
+  const [selectedGuidebookUnit, setSelectedGuidebookUnit] = useState<Unit | null>(null);
+  const [selectedChestNode, setSelectedChestNode] = useState<PathNode | null>(null);
+  const [selectedScriptNode, setSelectedScriptNode] = useState<PathNode | null>(null);
 
   // Helper: check if a whole unit is unlocked
   const isUnitUnlocked = (unitIdx: number, allUnits: Unit[]): boolean => {
@@ -210,28 +247,125 @@ export const LearnPage: React.FC = () => {
     activeUnitForHeader = currentSection.units[0];
   }
 
-  // Automatic smooth scroll to active node on mount / section switch / language switch
+  // User interaction detection: stop auto-scroll immediately if user scrolls or touches manually
   useEffect(() => {
-    let timer1: NodeJS.Timeout;
-    let timer2: NodeJS.Timeout;
-
-    const performScroll = () => {
-      if (activeNodeRef.current) {
-        activeNodeRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
-      }
+    const onUserInteraction = () => {
+      userHasInteractedRef.current = true;
     };
 
-    timer1 = setTimeout(performScroll, 200);
-    timer2 = setTimeout(performScroll, 600);
+    const events: (keyof WindowEventMap)[] = ['wheel', 'touchmove', 'touchstart', 'keydown'];
+    events.forEach((evt) => window.addEventListener(evt, onUserInteraction, { passive: true }));
 
     return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
+      events.forEach((evt) => window.removeEventListener(evt, onUserInteraction));
     };
-  }, [activeSectionId, selectedLanguage.languageId, activeNode?.nodeId]);
+  }, []);
+
+  // Compute exact target scroll Y position accounting for sticky Navbar and UnitHeaderBanner
+  const getScrollTargetY = (): number => {
+    // If learner is at Unit 1 and the very first lesson, keep comfortably at the top of the page
+    if (activeUnitForHeader.unitNumber === 1 && (activeNode?.order || 1) <= 1) {
+      return 0;
+    }
+
+    const navbar = document.querySelector('header');
+    const banner = document.querySelector('[data-sticky-banner="true"]');
+    const navbarHeight = navbar ? navbar.getBoundingClientRect().height : 56;
+    const bannerHeight = banner ? banner.getBoundingClientRect().height : 110;
+    const headerOffset = navbarHeight + bannerHeight + 16;
+
+    // For Unit > 1, if active node is early in the unit (order <= 3), scroll to unit container/divider
+    if (activeUnitForHeader.unitNumber > 1 && (activeNode?.order || 1) <= 3 && activeUnitRef.current) {
+      const rect = activeUnitRef.current.getBoundingClientRect();
+      return Math.max(0, rect.top + window.pageYOffset - headerOffset);
+    }
+
+    // If active node is later in unit (e.g. lesson 2 or trophy), scroll directly to active node
+    if (activeNodeRef.current) {
+      const rect = activeNodeRef.current.getBoundingClientRect();
+      return Math.max(0, rect.top + window.pageYOffset - headerOffset);
+    }
+
+    // Fallback to active unit
+    if (activeUnitRef.current) {
+      const rect = activeUnitRef.current.getBoundingClientRect();
+      return Math.max(0, rect.top + window.pageYOffset - headerOffset);
+    }
+
+    return 0;
+  };
+
+  const safeScrollTo = (top: number, smooth = false) => {
+    try {
+      window.scrollTo({
+        top,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    } catch {
+      window.scrollTo(0, top);
+    }
+  };
+
+  const performAutoScroll = (instant = false) => {
+    if (userHasInteractedRef.current) return;
+    const targetY = getScrollTargetY();
+    const currentY = window.pageYOffset || document.documentElement.scrollTop;
+    if (Math.abs(currentY - targetY) > 8) {
+      safeScrollTo(targetY, !instant);
+    }
+  };
+
+  const scrollToActiveUnitAndNode = () => {
+    userHasInteractedRef.current = false;
+    performAutoScroll(false);
+  };
+
+  // Automatic multi-phase scroll to active unit/node on mount, section switch, or language switch
+  useEffect(() => {
+    // 1. Disable browser scroll restoration so it never jumps back to 0 on route navigation
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    userHasInteractedRef.current = false;
+
+    // 2. Immediate microtask / rAF (instant jump so user never sees Unit 1 flash)
+    requestAnimationFrame(() => {
+      performAutoScroll(true);
+    });
+
+    // 3. Multi-phase stabilization as CSS, fonts, and mascots load
+    const t1 = setTimeout(() => performAutoScroll(true), 50);
+    const t2 = setTimeout(() => performAutoScroll(true), 150);
+    const t3 = setTimeout(() => performAutoScroll(true), 350);
+    const t4 = setTimeout(() => performAutoScroll(false), 700);
+
+    // 4. ResizeObserver on path container to handle dynamic image/font expansions
+    let ro: ResizeObserver | null = null;
+    let roTimeout: NodeJS.Timeout | null = null;
+
+    if (pathContainerRef.current && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => {
+        if (!userHasInteractedRef.current) {
+          performAutoScroll(true);
+        }
+      });
+      ro.observe(pathContainerRef.current);
+      // Disconnect observer after 2.5s once layout is completely static
+      roTimeout = setTimeout(() => {
+        ro?.disconnect();
+      }, 2500);
+    }
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+      if (ro) ro.disconnect();
+      if (roTimeout) clearTimeout(roTimeout);
+    };
+  }, [activeSectionId, selectedLanguage.languageId, activeNode?.nodeId, activeUnitForHeader.unitId]);
 
   // Handle clicking on a path node
   const handleNodeClick = (node: PathNode) => {
@@ -286,14 +420,8 @@ export const LearnPage: React.FC = () => {
     });
   };
 
-  // Scroll to active lesson node
-  const scrollToActiveNode = () => {
-    if (activeNodeRef.current) {
-      activeNodeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
-      window.scrollTo({ top: 300, behavior: 'smooth' });
-    }
-  };
+  // Alias for manual invocation if needed
+  const scrollToActiveNode = scrollToActiveUnitAndNode;
 
   // Progress metrics
   const allSectionNodes = currentSection.units.flatMap((u) => u.nodes);
@@ -324,6 +452,7 @@ export const LearnPage: React.FC = () => {
             onOpenGuidebook={() => setSelectedGuidebookUnit(activeUnitForHeader)}
             onOpenSectionSelector={() => setIsSectionModalOpen(true)}
             onStartActiveLesson={() => activeNode && handleNodeClick(activeNode)}
+            onScrollToCurrentUnit={scrollToActiveUnitAndNode}
           />
 
           {/* Section Progress Bar */}
@@ -348,10 +477,19 @@ export const LearnPage: React.FC = () => {
           </div>
 
           {/* Continuous Winding Snake Path (8 Units) */}
-          <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-4 sm:p-8 shadow-earthy">
+          <div
+            ref={pathContainerRef}
+            className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-4 sm:p-8 shadow-earthy"
+          >
             {currentSection.units.map((unit, unitIdx) => {
+              const isCurrentUnit = unit.unitId === activeUnitForHeader.unitId;
+
               return (
-                <div key={unit.unitId} className="w-full">
+                <div
+                  key={unit.unitId}
+                  ref={isCurrentUnit ? activeUnitRef : undefined}
+                  className="w-full scroll-mt-28 sm:scroll-mt-36"
+                >
                   {/* Duolingo Unit Divider (matching screenshot 2: "Describe people" divider) */}
                   {unitIdx > 0 && (
                     <div className="my-8 sm:my-12 flex items-center justify-center w-full max-w-lg mx-auto">
@@ -537,7 +675,7 @@ export const LearnPage: React.FC = () => {
         onClose={() => setIsSectionModalOpen(false)}
         sections={sections}
         activeSectionId={activeSectionId}
-        onSelectSection={(id) => setActiveSectionId(id)}
+        onSelectSection={handleSelectSection}
         languageName={selectedLanguage.name}
       />
     </div>

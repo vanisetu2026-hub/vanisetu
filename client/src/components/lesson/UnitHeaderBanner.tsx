@@ -11,6 +11,7 @@ interface UnitHeaderBannerProps {
   onOpenGuidebook: () => void;
   onOpenSectionSelector: () => void;
   onStartActiveLesson?: () => void;
+  onScrollToCurrentUnit?: () => void;
 }
 
 export const UnitHeaderBanner: React.FC<UnitHeaderBannerProps> = ({
@@ -21,11 +22,13 @@ export const UnitHeaderBanner: React.FC<UnitHeaderBannerProps> = ({
   onOpenGuidebook,
   onOpenSectionSelector,
   onStartActiveLesson,
+  onScrollToCurrentUnit,
 }) => {
   const theme: UnitThemeConfig = UNIT_THEMES[unit.themeColor] || UNIT_THEMES.green;
 
   return (
     <div
+      data-sticky-banner="true"
       className={`
         sticky top-3 z-30 w-full rounded-2xl sm:rounded-3xl p-4 sm:p-5
         bg-gradient-to-r ${theme.headerGradient} border-2 ${theme.headerBorder}
@@ -48,13 +51,19 @@ export const UnitHeaderBanner: React.FC<UnitHeaderBannerProps> = ({
             <ChevronDown className="w-3.5 h-3.5 opacity-80" />
           </button>
 
-          <h2 className="text-base sm:text-xl font-black font-display tracking-tight leading-snug line-clamp-1 drop-shadow-xs">
-            {unit.title}
-          </h2>
+          <div
+            onClick={onScrollToCurrentUnit}
+            className={onScrollToCurrentUnit ? 'cursor-pointer group select-none' : ''}
+            title={onScrollToCurrentUnit ? 'Click to center on active unit' : undefined}
+          >
+            <h2 className="text-base sm:text-xl font-black font-display tracking-tight leading-snug line-clamp-1 drop-shadow-xs group-hover:underline">
+              {unit.title}
+            </h2>
 
-          <p className="text-[11px] sm:text-xs text-white/90 font-medium line-clamp-1 hidden sm:block">
-            {unit.description}
-          </p>
+            <p className="text-[11px] sm:text-xs text-white/90 font-medium line-clamp-1 hidden sm:block">
+              {unit.description}
+            </p>
+          </div>
         </div>
 
         {/* Right: Guidebook Button (Notebook icon matching Duolingo screenshot) */}
