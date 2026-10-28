@@ -18,6 +18,12 @@ import {
 import { useAuth } from './AuthContext';
 import { useNotification } from './NotificationContext';
 import { sound } from '../utils/sound';
+import {
+  fetchCommunityContributionsFromFirestore,
+  saveCommunityContributionToFirestore,
+  likeCommunityContributionInFirestore,
+  syncUserProfileToFirestore,
+} from '../services/firebaseService';
 
 interface LearningContextType {
   selectedLanguage: TribalLanguage;
@@ -160,6 +166,30 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   useEffect(() => {
+    let isMounted = true;
+    fetchCommunityContributionsFromFirestore().then((firestoreStories) => {
+      if (isMounted && firestoreStories && firestoreStories.length > 0) {
+        const savedLiked = localStorage.getItem(LOCAL_LIKED_CONTRIBUTIONS_KEY);
+        const likedList: string[] = savedLiked ? JSON.parse(savedLiked) : [];
+        setCommunityContributions((prev) => {
+          const map = new Map<string, CommunityContribution>();
+          COMMUNITY_STORIES.forEach((s) => map.set(s.contributionId, s));
+          prev.forEach((s) => map.set(s.contributionId, s));
+          firestoreStories.forEach((s) => map.set(s.contributionId, s));
+          return Array.from(map.values()).map((item) => ({
+            ...item,
+            likesCount: item.likesCount + (likedList.includes(item.contributionId) ? 1 : 0),
+          }));
+        });
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (user?.selectedLanguage && user.selectedLanguage !== languageId) {
       setLanguageId(user.selectedLanguage);
     }
@@ -235,6 +265,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return updated;
     });
 
+    // Save to Firebase Cloud Firestore
+    saveCommunityContributionToFirestore(newEntry);
+
     addToast({
       type: 'success',
       title: 'Cultural Contribution Received',
@@ -269,6 +302,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       localStorage.setItem(LOCAL_COMMUNITY_KEY, JSON.stringify(updated));
       return updated;
     });
+
+    // Update likes count in Firebase Cloud Firestore
+    likeCommunityContributionInFirestore(id, isAlreadyLiked ? -1 : 1);
   };
 
   const isLessonCompleted = (lessonId: string): boolean => {
@@ -368,14 +404,21 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     }
 
-    updateUser({
+    const updatedUserObj = {
+      ...activeProfile,
       totalXP: newXP,
       currentStreak: newStreak,
       longestStreak: longest,
       completedLessons: newCompleted,
       unlockedAchievements: newAchievements,
       lastLearningDate: new Date().toISOString(),
-    });
+    };
+
+    updateUser(updatedUserObj);
+
+    if (activeProfile && !activeProfile.isGuest) {
+      syncUserProfileToFirestore(updatedUserObj);
+    }
 
     addToast({
       type: 'xp',

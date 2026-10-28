@@ -577,7 +577,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (isFirebaseConfigured && db && !user.isGuest) {
       try {
-        await updateDoc(doc(db, 'users', user.uid), updates);
+        await setDoc(doc(db, 'users', user.uid), updates, { merge: true });
       } catch (e) {
         console.warn('Could not update Firestore profile:', e);
       }

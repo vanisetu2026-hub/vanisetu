@@ -10,9 +10,12 @@ import {
   HelpCircle,
   Shield,
   Layers,
-  Sparkles
+  Sparkles,
+  Database,
+  CloudUpload,
 } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
+import { seedAllDataToFirestore, SeedResult } from '../../services/firebaseService';
 import type { PlatformSettings, AdminLanguage } from '../../types';
 
 export const AdminSettingsPage: React.FC = () => {
@@ -22,6 +25,8 @@ export const AdminSettingsPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<SeedResult | null>(null);
 
   const loadData = async () => {
     try {
@@ -61,6 +66,25 @@ export const AdminSettingsPage: React.FC = () => {
     }
   };
 
+  const handleSeedFirebase = async () => {
+    if (
+      !window.confirm(
+        'This will seed/sync all tribal languages, courses, lessons, vocabulary, and community stories into Firebase Cloud Firestore. Proceed?'
+      )
+    ) {
+      return;
+    }
+    try {
+      setIsSeeding(true);
+      const res = await seedAllDataToFirestore();
+      setSeedResult(res);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to seed Firebase data');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white p-12 rounded-xl text-center text-sm text-vanisetu-text-muted border border-vanisetu-primary/10">
@@ -94,6 +118,65 @@ export const AdminSettingsPage: React.FC = () => {
           <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-semibold animate-pulse">
             <CheckCircle className="w-4 h-4" />
             Platform configurations saved!
+          </div>
+        )}
+      </div>
+
+      {/* Firebase Cloud Firestore Integration Card */}
+      <div className="bg-white p-5 sm:p-6 rounded-xl border border-vanisetu-primary/10 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 shrink-0">
+              <Database className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-bold text-vanisetu-primary">
+                  Firebase Cloud Firestore Integration
+                </h3>
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  Project: vanisetu-5b548
+                </span>
+              </div>
+              <p className="text-xs text-vanisetu-text-muted mt-1 leading-relaxed">
+                Connect and sync tribal curriculum (languages, courses, lessons), vocabulary items, and community contributions to Firebase Cloud Firestore.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSeedFirebase}
+            disabled={isSeeding}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50 shrink-0"
+          >
+            <CloudUpload className="w-4 h-4" />
+            <span>{isSeeding ? 'Seeding Firestore...' : 'Seed Data to Firebase'}</span>
+          </button>
+        </div>
+
+        {seedResult && (
+          <div
+            className={`p-3.5 rounded-xl border text-xs ${
+              seedResult.success
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                : 'bg-red-50 border-red-200 text-red-900'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 font-bold mb-1">
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
+              <span>{seedResult.message}</span>
+            </div>
+            {seedResult.success && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 pt-2 border-t border-emerald-200 text-[11px]">
+                <div>• Languages: <strong className="font-bold">{seedResult.languagesCount}</strong></div>
+                <div>• Courses: <strong className="font-bold">{seedResult.coursesCount}</strong></div>
+                <div>• Lessons: <strong className="font-bold">{seedResult.lessonsCount}</strong></div>
+                <div>• Vocabulary: <strong className="font-bold">{seedResult.vocabularyCount}</strong></div>
+                <div>• Stories: <strong className="font-bold">{seedResult.storiesCount}</strong></div>
+                <div>• Badges: <strong className="font-bold">{seedResult.achievementsCount}</strong></div>
+              </div>
+            )}
           </div>
         )}
       </div>
