@@ -11,7 +11,7 @@ export const LanguageSelectionPage: React.FC = () => {
 
   const handleSelectLanguage = (id: string) => {
     setSelectedLanguageId(id);
-    navigate('/dashboard');
+    navigate('/learn');
   };
 
   return (

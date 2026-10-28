@@ -135,7 +135,7 @@ export const LessonCompletedPage: React.FC = () => {
             variant="gold"
             size="lg"
             fullWidth={true}
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/learn')}
             icon={<ArrowRight className="w-5 h-5" />}
             iconPosition="right"
           >

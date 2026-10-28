@@ -10,7 +10,7 @@ import {
 
 export const MobileBottomNav: React.FC = () => {
   const items = [
-    { name: 'Learn', path: '/dashboard', icon: GraduationCap },
+    { name: 'Learn', path: '/learn', icon: GraduationCap },
     { name: 'Flashcards', path: '/vocabulary', icon: Sparkles },
     { name: 'Dictionary', path: '/dictionary', icon: BookOpen },
     { name: 'Community', path: '/community', icon: Users2 },

@@ -10,6 +10,7 @@ import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { LanguageSelectionPage } from './pages/LanguageSelectionPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { LearnPage } from './pages/LearnPage';
 import { LessonPage } from './pages/LessonPage';
 import { VocabularyFlashcardsPage } from './pages/VocabularyFlashcardsPage';
 import { TranslationPage } from './pages/TranslationPage';
@@ -52,7 +53,7 @@ export const App: React.FC = () => {
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/languages" element={<LanguageSelectionPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/learn" element={<DashboardPage />} />
+                <Route path="/learn" element={<LearnPage />} />
                 <Route path="/lesson/:lessonId" element={<LessonPage />} />
                 <Route path="/vocabulary" element={<VocabularyFlashcardsPage />} />
                 <Route path="/translate" element={<TranslationPage />} />

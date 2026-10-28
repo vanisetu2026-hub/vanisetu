@@ -58,7 +58,7 @@ export const LessonPage: React.FC = () => {
       <div className="w-full space-y-4 mb-6">
         <div className="flex items-center justify-between gap-4">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/learn')}
             className="p-2 rounded-2xl bg-cream-100 hover:bg-cream-300 border border-sage-300 text-teal-800 transition-colors"
             title="Exit lesson"
             aria-label="Exit lesson"

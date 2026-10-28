@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLearning } from '../contexts/LearningContext';
-import { LessonCard } from '../components/cards/LessonCard';
 import { ProgressBar } from '../components/common/ProgressBar';
 import { Button } from '../components/common/Button';
-import { Modal } from '../components/common/Modal';
 import { ACHIEVEMENTS } from '../data/tribalData';
 import {
   Sparkles,
@@ -14,23 +12,30 @@ import {
   BookOpen,
   Trophy,
   Target,
-  Compass,
+  Globe2,
   CheckCircle2,
-  Lock,
   Layers,
+  Users2,
+  Calendar,
+  Compass,
+  ArrowUpRight,
+  Heart,
+  Volume2,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const {
     selectedLanguage,
+    allLanguages,
+    setSelectedLanguageId,
     lessons,
+    dictionary,
+    communityContributions,
     isLessonCompleted,
     isLessonUnlocked,
   } = useLearning();
   const navigate = useNavigate();
-
-  const [isGuidebookOpen, setIsGuidebookOpen] = useState(false);
 
   // Find next in-progress or first unlocked uncompleted lesson
   const nextLesson =
@@ -41,435 +46,442 @@ export const DashboardPage: React.FC = () => {
   const progressPercent = Math.round((completedCount / (lessons.length || 1)) * 100);
 
   const dailyGoalXP = user?.dailyGoal || 50;
-  const dailyProgressXP = Math.min(dailyGoalXP, user?.totalXP ? user.totalXP % (dailyGoalXP || 50) : 0);
+  const currentStreak = user?.currentStreak || 0;
+  const totalXP = user?.totalXP || 0;
+  const dailyProgressXP = Math.min(dailyGoalXP, totalXP ? totalXP % (dailyGoalXP || 50) : 0);
 
-  // Unit 1 Guidebook phrases tailored to selected language
-  const getGuidebookPhrases = () => {
-    switch (selectedLanguage.languageId) {
-      case 'santali':
-        return [
-          { native: 'ᱡᱚᱦᱟᱨ', roman: 'Johar', meaning: 'Hello / Traditional Respectful Greeting' },
-          { native: 'ᱟᱹᱰᱤ ᱡᱚᱦᱟᱨ', roman: 'Adi Johar', meaning: 'Warm / Heartfelt Greetings' },
-          { native: 'ᱪᱮᱫ ᱞᱮᱠᱟ ᱢᱮᱱᱟᱢᱟ?', roman: 'Chet leka menama?', meaning: 'How are you?' },
-          { native: 'ᱵᱮᱥ ᱜᱮ ᱢᱮᱱᱟᱹᱧᱟ', roman: 'Bes ge menanya', meaning: 'I am doing well' },
-          { native: 'ᱥᱟᱨᱦᱟᱣ', roman: 'Sarhao', meaning: 'Thank you' },
-          { native: 'ᱵᱤᱨ ᱟᱨ ᱫᱟᱜ', roman: 'Bir ar Da', meaning: 'Forest and Water (Sacred Nature)' },
-        ];
-      case 'mundari':
-        return [
-          { native: 'जोहार', roman: 'Johar', meaning: 'Greetings of respect and harmony' },
-          { native: 'हेसे', roman: 'Hese', meaning: 'Yes' },
-          { native: 'कागे', roman: 'Kage', meaning: 'No' },
-          { native: 'आम चेलेका मेनामा?', roman: 'Am cheleka menama?', meaning: 'How are you?' },
-          { native: 'एनम', roman: 'Enam', meaning: 'Thank you' },
-          { native: 'ओरोबु नपामा', roman: 'Orobu napama', meaning: 'We shall meet again' },
-        ];
-      case 'ho':
-        return [
-          { native: 'ᱡᱚᱦᱟᱨ', roman: 'Johar', meaning: 'Reverent traditional greeting' },
-          { native: 'ᱦᱮ', roman: 'He', meaning: 'Yes' },
-          { native: 'ᱠᱟ', roman: 'Ka', meaning: 'No' },
-          { native: 'ᱵᱩᱜᱤᱛᱮ ᱢᱮᱱᱟᱢᱟ?', roman: 'Bugite menama?', meaning: 'Are you well?' },
-          { native: 'ᱫᱟᱹᱭ', roman: 'Dai', meaning: 'Elder Sister (Respectful address)' },
-        ];
-      case 'kurukh':
-      default:
-        return [
-          { native: 'गोड़ लागी', roman: 'God Lagi', meaning: 'Respectful salutation (I touch your feet)' },
-          { native: 'हअ', roman: 'Ha', meaning: 'Yes' },
-          { native: 'मला', roman: 'Mala', meaning: 'No' },
-          { native: 'एक’अस रही?', roman: "Ek'as rahi?", meaning: 'How are you?' },
-          { native: 'कोड़े रही', roman: 'Kode rahi', meaning: 'I am well' },
-        ];
-    }
-  };
+  // Dynamic 7-day activity tracking
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const todayDayIndex = (new Date().getDay() + 6) % 7; // 0 for Mon, 6 for Sun
+
+  const daysOfWeek = dayLabels.map((day, idx) => {
+    const isToday = idx === todayDayIndex;
+    const isActive = isToday ? totalXP > 0 : idx < todayDayIndex && idx >= todayDayIndex - Math.max(0, currentStreak - 1);
+    const xp = isToday ? Math.min(totalXP, dailyGoalXP) : (isActive ? dailyGoalXP : 0);
+    return {
+      day,
+      xp,
+      active: isActive && xp > 0,
+      isToday,
+    };
+  });
 
   return (
-    <div className="space-y-6">
-      {/* Duolingo Layout Grid: Main Learning Path + Right Side Widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-        {/* Left / Primary Column: Unit Banner + Interactive Lesson Road */}
-        <div className="lg:col-span-8 space-y-4 sm:space-y-6">
-          {/* Authentic Duolingo Unit 1 Banner */}
-          <div className="bg-gradient-to-r from-forest-700 via-forest-800 to-forest-900 border-2 border-forest-600/50 text-cream-50 rounded-3xl p-4 sm:p-6 shadow-earthy-lg relative overflow-hidden">
-            {/* Subtle radial glow */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gold-400/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="space-y-8 max-w-6xl mx-auto py-2">
+      {/* 1. Welcome Hero & Quick Resume Banner */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-forest-800 via-forest-900 to-teal-950 border-3 border-forest-700/60 text-cream-50 p-6 sm:p-8 shadow-earthy-lg">
+        {/* Subtle decorative tribal ambient glow */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gold-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-terracotta-500/10 rounded-full blur-2xl pointer-events-none" />
 
-            <div className="relative z-10 space-y-3">
-              {/* Top Row: Unit Pill + Language Badge + Guidebook Action */}
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="bg-gold-500/20 text-gold-300 border border-gold-400/40 text-[10px] sm:text-xs font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full">
-                    UNIT 1
-                  </span>
-                  <span className="text-xs sm:text-sm font-bold text-cream-200">
-                    {selectedLanguage.name} <span className="text-gold-300">({selectedLanguage.nativeName})</span>
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => setIsGuidebookOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-cream-100/10 hover:bg-cream-100/20 active:scale-95 border border-cream-100/20 px-2.5 sm:px-3 py-1 rounded-2xl text-xs font-bold text-cream-100 transition-all shadow-sm"
-                  title="View Unit 1 Guidebook and key phrases"
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-gold-300" />
-                  <span>Guidebook</span>
-                </button>
-              </div>
-
-              {/* Title & Short Description */}
-              <div>
-                <h1 className="text-lg sm:text-2xl font-extrabold font-display leading-tight text-cream-50">
-                  Simple Greetings & Fundamentals
-                </h1>
-                <p className="text-xs sm:text-sm text-cream-200 mt-0.5 font-medium leading-relaxed">
-                  Learn everyday greetings, polite expressions, and sacred nature words in {selectedLanguage.name}.
-                </p>
-              </div>
-
-              {/* Bottom Row: Progress + Quick Action */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-forest-600/40">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between sm:justify-start gap-2 text-xs font-bold text-cream-200">
-                    <span>Progress: {completedCount} / {lessons.length} Lessons</span>
-                    <span className="text-gold-300 font-extrabold">{progressPercent}%</span>
-                  </div>
-                  <div className="w-full sm:w-48">
-                    <ProgressBar current={completedCount} total={lessons.length} color="gold" height="sm" />
-                  </div>
-                </div>
-
-                {nextLesson && (
-                  <Button
-                    variant="gold"
-                    size="sm"
-                    onClick={() => navigate(`/lesson/${nextLesson.lessonId}`)}
-                    icon={<ArrowRight className="w-4 h-4" />}
-                    iconPosition="right"
-                    className="w-full sm:w-auto text-xs sm:text-sm py-2 px-4 shadow-[0_3px_0_#CF841C]"
-                  >
-                    {completedCount === 0 ? 'Start Unit 1' : `Continue: ${nextLesson.title.split('(')[0]}`}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Compact Mini-Stats Bar for Mobile (< lg) */}
-          <div className="lg:hidden flex items-center justify-between gap-2 bg-cream-100 border-2 border-sage-200 rounded-2xl p-2.5 shadow-sm">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Target className="w-4 h-4 text-gold-500 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between text-[11px] font-bold text-teal-800">
-                  <span>Daily Goal</span>
-                  <span>{dailyProgressXP}/{dailyGoalXP} XP</span>
-                </div>
-                <div className="mt-0.5">
-                  <ProgressBar current={dailyProgressXP} total={dailyGoalXP} color="gold" height="xs" />
-                </div>
-              </div>
-            </div>
-
-            <div className="h-6 w-px bg-sage-200 shrink-0 mx-1" />
-
-            <Link
-              to="/vocabulary"
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-forest-700 hover:text-forest-900 bg-forest-50 hover:bg-forest-100 border border-forest-200 px-2.5 py-1 rounded-xl shrink-0 transition-colors"
-            >
-              <Layers className="w-3.5 h-3.5 text-forest-600" />
-              <span>Flashcards</span>
-            </Link>
-          </div>
-
-          {/* Interactive Lesson Road / Duolingo Winding Path */}
-          <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-4 sm:p-8 shadow-earthy">
-            <div className="flex items-center justify-between border-b-2 border-sage-200 pb-3 mb-6">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-forest-600">
-                  Learning Journey
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold uppercase tracking-wider bg-gold-400/20 text-gold-300 border border-gold-400/30 px-3 py-1 rounded-full">
+                {selectedLanguage.sampleGreeting} • Tribal Heritage Hub
+              </span>
+              {user?.isGuest && (
+                <span className="text-[10px] font-extrabold uppercase tracking-wider bg-gold-300 text-teal-950 px-2.5 py-0.5 rounded-full">
+                  Guest Mode
                 </span>
-                <h2 className="text-xl sm:text-2xl font-extrabold font-display text-teal-950">
-                  {selectedLanguage.name} Path
-                </h2>
+              )}
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-extrabold font-display leading-tight text-cream-50">
+              Johar, {user?.name || 'Learner'}! 👋
+            </h1>
+
+            <p className="text-xs sm:text-sm text-cream-200/90 font-medium leading-relaxed">
+              Welcome to your VANISETU overview. You are currently mastering{' '}
+              <strong className="text-gold-300">{selectedLanguage.name}</strong> ({selectedLanguage.nativeName}) with{' '}
+              {completedCount} of {lessons.length} lessons mastered.
+            </p>
+
+            <div className="pt-2 flex flex-wrap items-center gap-3">
+              <Button
+                variant="gold"
+                size="md"
+                onClick={() => navigate('/learn')}
+                icon={<ArrowRight className="w-4 h-4" />}
+                iconPosition="right"
+                className="shadow-[0_3px_0_#CF841C]"
+              >
+                {completedCount === 0 ? 'Start Interactive Road' : `Resume: ${nextLesson?.title.split('(')[0] || 'Learning Road'}`}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => navigate('/vocabulary')}
+                icon={<Layers className="w-4 h-4" />}
+                className="bg-cream-100/10 border-cream-100/30 text-cream-100 hover:bg-cream-100/20"
+              >
+                Practice Flashcards
+              </Button>
+            </div>
+          </div>
+
+          {/* Quick Active Language Card Widget */}
+          <div className="lg:w-72 bg-forest-950/70 border-2 border-forest-600/60 rounded-3xl p-5 shadow-inner space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-forest-300 uppercase tracking-wider text-[10px]">
+                Active Focus
+              </span>
+              <span className="font-extrabold text-gold-400 font-display">
+                {progressPercent}% Complete
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-forest-700 border-2 border-forest-500 flex items-center justify-center font-display font-black text-xl text-cream-100 shrink-0">
+                {selectedLanguage.name.charAt(0)}
               </div>
-              <div className="text-right">
-                <span className="text-[11px] font-bold text-teal-600">Status</span>
-                <p className="font-extrabold font-display text-forest-700 text-sm sm:text-base">
-                  {completedCount === lessons.length ? 'Mastered 🎉' : 'In Progress'}
+              <div className="min-w-0">
+                <p className="font-bold text-base text-cream-50 truncate font-display">
+                  {selectedLanguage.name}
+                </p>
+                <p className="text-xs text-gold-300/90 font-mono truncate">
+                  {selectedLanguage.nativeName}
                 </p>
               </div>
             </div>
 
-            {/* Winding Nodes */}
-            <div className="py-2 flex flex-col items-center">
-              {lessons.map((lesson, index) => (
-                <LessonCard
-                  key={lesson.lessonId}
-                  lesson={lesson}
-                  isCompleted={isLessonCompleted(lesson.lessonId)}
-                  isUnlocked={isLessonUnlocked(lesson)}
-                  onSelect={(id) => navigate(`/lesson/${id}`)}
-                  index={index}
-                />
-              ))}
+            <ProgressBar current={completedCount} total={lessons.length} color="gold" height="xs" />
 
-              {/* Duolingo Unit Milestone / Checkpoint */}
-              <div className="mt-6 pt-6 border-t-2 border-dashed border-sage-200 w-full flex flex-col items-center text-center">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-cream-200 border-2 border-sage-300 flex items-center justify-center text-teal-600 shadow-sm mb-2">
-                  {completedCount === lessons.length ? (
-                    <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-gold-500 animate-bounce" />
+            <div className="pt-1 flex items-center justify-between text-[11px] text-cream-300 font-medium">
+              <span>{completedCount} / {lessons.length} Lessons</span>
+              <button
+                onClick={() => navigate('/languages')}
+                className="text-gold-300 hover:underline font-bold"
+              >
+                Switch Language →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Core Metrics Summary Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {/* Total XP */}
+        <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-5 shadow-earthy transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 rounded-2xl bg-gold-100 text-gold-700 flex items-center justify-center mb-3">
+            <Sparkles className="w-5 h-5 fill-current" />
+          </div>
+          <span className="text-2xl sm:text-3xl font-extrabold font-display text-teal-950 block">
+            {totalXP}
+          </span>
+          <span className="text-[11px] font-bold text-teal-600 uppercase tracking-wider block mt-0.5">
+            Total XP Earned
+          </span>
+        </div>
+
+        {/* Current Streak */}
+        <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-5 shadow-earthy transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 rounded-2xl bg-terracotta-100 text-terracotta-700 flex items-center justify-center mb-3">
+            <Flame className={`w-5 h-5 ${currentStreak > 0 ? 'fill-current animate-bounce' : ''}`} />
+          </div>
+          <span className="text-2xl sm:text-3xl font-extrabold font-display text-teal-950 block">
+            {currentStreak}
+          </span>
+          <span className="text-[11px] font-bold text-teal-600 uppercase tracking-wider block mt-0.5">
+            Day Streak
+          </span>
+        </div>
+
+        {/* Lessons Completed */}
+        <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-5 shadow-earthy transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 rounded-2xl bg-forest-100 text-forest-700 flex items-center justify-center mb-3">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <span className="text-2xl sm:text-3xl font-extrabold font-display text-teal-950 block">
+            {user?.completedLessons.length || 0}
+          </span>
+          <span className="text-[11px] font-bold text-teal-600 uppercase tracking-wider block mt-0.5">
+            Lessons Mastered
+          </span>
+        </div>
+
+        {/* Words Explored */}
+        <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-5 shadow-earthy transition-transform hover:-translate-y-0.5">
+          <div className="w-10 h-10 rounded-2xl bg-tribalpurple-100 text-tribalpurple-700 flex items-center justify-center mb-3">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <span className="text-2xl sm:text-3xl font-extrabold font-display text-teal-950 block">
+            {dictionary.length}
+          </span>
+          <span className="text-[11px] font-bold text-teal-600 uppercase tracking-wider block mt-0.5">
+            Words in Lexicon
+          </span>
+        </div>
+      </div>
+
+      {/* 3. Tribal Language Exploration & Quick Switch Hub */}
+      <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-6 sm:p-8 shadow-earthy space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-2 border-sage-200 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Globe2 className="w-5 h-5 text-forest-600" />
+              <h2 className="text-xl sm:text-2xl font-extrabold font-display text-teal-950">
+                Tribal Languages Catalog
+              </h2>
+            </div>
+            <p className="text-xs text-teal-600 font-medium mt-0.5">
+              Switch languages freely. Your streaks and XP stay preserved across all courses.
+            </p>
+          </div>
+
+          <Link
+            to="/languages"
+            className="text-xs font-bold text-forest-700 hover:text-forest-900 flex items-center gap-1 self-start sm:self-auto"
+          >
+            <span>View Detailed Profiles</span>
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {/* 4 Language Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {allLanguages.map((lang) => {
+            const isCurrent = lang.languageId === selectedLanguage.languageId;
+            return (
+              <div
+                key={lang.languageId}
+                className={`rounded-3xl p-5 border-2 transition-all flex flex-col justify-between ${
+                  isCurrent
+                    ? 'bg-gradient-to-br from-forest-50 to-sage-100/90 border-forest-600 shadow-md ring-2 ring-forest-600/30'
+                    : 'bg-cream-50 hover:bg-cream-200/50 border-sage-200 hover:border-forest-400 shadow-sm'
+                }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="w-10 h-10 rounded-2xl bg-forest-600 text-cream-50 font-display font-extrabold flex items-center justify-center text-sm shadow-sm">
+                      {lang.name.charAt(0)}
+                    </div>
+                    {isCurrent ? (
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider bg-forest-600 text-cream-50 px-2 py-0.5 rounded-full">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-teal-600 bg-cream-200 px-2 py-0.5 rounded-full">
+                        {lang.speakersCount.split(' ')[0]}
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="font-extrabold font-display text-base text-teal-950">
+                      {lang.name}
+                    </h3>
+                    <p className="text-xs font-mono font-bold text-forest-700">
+                      {lang.nativeName}
+                    </p>
+                    <p className="text-[11px] text-teal-600 mt-1 line-clamp-2">
+                      {lang.description}
+                    </p>
+                  </div>
+
+                  <div className="pt-1 text-[11px] text-teal-700 space-y-0.5 border-t border-sage-200/60">
+                    <p><strong className="text-teal-900">Script:</strong> {lang.scriptName.split('/')[0]}</p>
+                    <p><strong className="text-teal-900">Region:</strong> {lang.region.split(',')[0]}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-3 border-t border-sage-200">
+                  {isCurrent ? (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      fullWidth={true}
+                      onClick={() => navigate('/learn')}
+                      icon={<ArrowRight className="w-3.5 h-3.5" />}
+                      iconPosition="right"
+                      className="text-xs py-1.5"
+                    >
+                      Continue Path
+                    </Button>
                   ) : (
-                    <Lock className="w-6 h-6 sm:w-7 sm:h-7 text-teal-400" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      fullWidth={true}
+                      onClick={() => setSelectedLanguageId(lang.languageId)}
+                      className="text-xs py-1.5 hover:bg-forest-50"
+                    >
+                      Switch to {lang.name}
+                    </Button>
                   )}
                 </div>
-                <h3 className="font-display font-extrabold text-sm sm:text-base text-teal-900">
-                  Unit 2: Family, Kinship & Elders
-                </h3>
-                <p className="text-xs text-teal-600 font-medium max-w-xs mt-0.5">
-                  {completedCount === lessons.length
-                    ? 'Congratulations! You unlocked the next milestone in tribal heritage.'
-                    : 'Complete all Unit 1 lessons to unlock family terminology.'}
-                </p>
               </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 4. Two-Column Layout: Learning Momentum & Quick Practice Shortcuts */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Weekly Momentum & Activity Bar */}
+        <div className="lg:col-span-7 bg-cream-100 border-2 border-sage-200 rounded-3xl p-6 sm:p-7 shadow-earthy space-y-5">
+          <div className="flex items-center justify-between border-b-2 border-sage-200 pb-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-forest-600" />
+              <h3 className="font-display font-extrabold text-lg text-teal-950">
+                Weekly Learning Momentum
+              </h3>
             </div>
+            <span className="text-xs font-bold text-forest-700 bg-forest-50 px-3 py-1 rounded-full border border-forest-200">
+              Goal: {dailyGoalXP} XP / Day
+            </span>
           </div>
 
-          {/* Secondary Exploration Cards on Mobile (rendered below the lessons so lessons are seen first!) */}
-          <div className="lg:hidden space-y-4 pt-2">
-            {/* Daily Challenge Card */}
-            <div className="bg-gradient-to-br from-gold-50 to-cream-100 border-2 border-gold-300 rounded-3xl p-5 shadow-sm space-y-2.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-gold-700 uppercase tracking-wider">
-                <Trophy className="w-4 h-4 text-gold-600" />
-                <span>Daily Challenge</span>
-              </div>
-              <h4 className="font-display font-extrabold text-base text-teal-950">
-                Complete 2 Lessons Today
-              </h4>
-              <p className="text-xs text-teal-700 font-medium">
-                Earn an extra +50 XP bonus and unlock the next cultural milestone in {selectedLanguage.name}.
-              </p>
-              <div className="pt-1">
-                <ProgressBar current={completedCount} total={2} color="gold" height="xs" showPercentage={true} />
-              </div>
-            </div>
+          {/* Bar chart */}
+          <div className="pt-4 flex items-end justify-between gap-3 h-44 border-b border-sage-300 pb-2">
+            {daysOfWeek.map((item, idx) => {
+              const barHeight = item.xp > 0 ? Math.min(100, Math.max(12, (item.xp / dailyGoalXP) * 100)) : 6;
+              return (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+                  <div
+                    className={`w-full max-w-[42px] rounded-t-xl transition-all duration-500 relative group ${
+                      item.active
+                        ? 'bg-gradient-to-t from-forest-600 to-forest-500 shadow-sm'
+                        : 'bg-cream-300'
+                    }`}
+                    style={{ height: `${barHeight}%` }}
+                  >
+                    <div className="opacity-0 group-hover:opacity-100 absolute -top-7 left-1/2 -translate-x-1/2 bg-teal-950 text-cream-50 text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none transition-opacity whitespace-nowrap">
+                      {item.xp} XP
+                    </div>
+                  </div>
+                  <span className={`text-xs font-bold ${item.isToday ? 'text-forest-700 underline font-extrabold' : 'text-teal-700'}`}>
+                    {item.day}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
 
-            {/* Cultural Lore Card */}
-            <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-5 shadow-sm space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-forest-700 uppercase tracking-wider">
-                <Compass className="w-4 h-4 text-forest-600" />
-                <span>Cultural Heritage</span>
+          {/* Today's Goal Tracker Card */}
+          <div className="p-4 rounded-2xl bg-cream-50 border-2 border-sage-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-teal-800">
+                <Target className="w-4 h-4 text-gold-600" />
+                <span>Today’s Target: {dailyProgressXP} / {dailyGoalXP} XP</span>
               </div>
-              <h4 className="font-display font-bold text-base text-teal-900">
-                The Sacred Grove (Sarna)
-              </h4>
-              <p className="text-xs text-teal-700 leading-relaxed font-medium">
-                In tribal cosmology, nature is an elder kin to cherish. Every village preserves a virgin forest patch called Sarna where the Sal trees bloom unpruned.
+              <p className="text-[11px] text-teal-600 font-medium">
+                {dailyProgressXP >= dailyGoalXP
+                  ? 'Target completed! Superb dedication to tribal learning.'
+                  : `Complete 1 lesson today to earn +${Math.max(10, dailyGoalXP - dailyProgressXP)} XP.`}
               </p>
-              <Link
-                to="/community"
-                className="text-xs font-bold text-forest-700 hover:underline inline-block pt-1"
-              >
-                Explore Tribal Stories & Folktales →
-              </Link>
+            </div>
+            <div className="w-full sm:w-44">
+              <ProgressBar current={dailyProgressXP} total={dailyGoalXP} color="gold" height="sm" />
             </div>
           </div>
         </div>
 
-        {/* Right Column: Desktop/Laptop Widgets (Hidden on small screens, shown on lg screens) */}
-        <div className="hidden lg:block lg:col-span-4 space-y-6 sticky top-24">
-          {/* Daily Goal & Streak Card */}
-          <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-6 shadow-sm space-y-4">
+        {/* Right Column: Quick Immersion Shortcuts */}
+        <div className="lg:col-span-5 space-y-4">
+          {/* Flashcard Drill Shortcut Card */}
+          <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-5 sm:p-6 shadow-earthy space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-teal-600 uppercase tracking-wider">
-                Daily Goal
+              <span className="text-[10px] font-bold text-forest-600 uppercase tracking-wider flex items-center gap-1">
+                <Layers className="w-3.5 h-3.5" />
+                <span>Active Vocabulary</span>
               </span>
-              <Target className="w-4 h-4 text-gold-500" />
-            </div>
-
-            <div>
-              <p className="text-2xl font-extrabold font-display text-teal-900">
-                {dailyProgressXP} / {dailyGoalXP} <span className="text-xs font-bold text-gold-600">XP</span>
-              </p>
-              <p className="text-xs text-teal-600 font-medium mt-0.5">
-                {dailyProgressXP >= dailyGoalXP
-                  ? 'Goal completed for today! Awesome work!'
-                  : `${dailyGoalXP - dailyProgressXP} XP to reach today’s target`}
-              </p>
-            </div>
-
-            <ProgressBar current={dailyProgressXP} total={dailyGoalXP} color="gold" height="sm" />
-
-            <div className="pt-3 border-t border-sage-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Flame className={`w-4 h-4 ${(user?.currentStreak || 0) > 0 ? 'text-terracotta-500 fill-current animate-bounce' : 'text-teal-400'}`} />
-                <span className="text-xs font-bold text-teal-800">
-                  {user?.currentStreak || 0} Day Streak
-                </span>
-              </div>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                (user?.currentStreak || 0) > 0
-                  ? 'text-terracotta-600 bg-terracotta-50 border-terracotta-200'
-                  : 'text-teal-600 bg-cream-200 border-sage-200'
-              }`}>
-                {(user?.currentStreak || 0) > 0 ? 'Active Fire 🔥' : 'Start Today'}
+              <span className="text-xs font-extrabold text-gold-700 bg-gold-100 px-2 py-0.5 rounded-full">
+                Interactive
               </span>
             </div>
-          </div>
-
-          {/* Flashcards Practice Quick Card */}
-          <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-6 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-forest-600 uppercase tracking-wider">
-                Word Practice
-              </span>
-              <BookOpen className="w-4 h-4 text-forest-600" />
-            </div>
-            <h3 className="text-lg font-bold font-display text-teal-900">
+            <h3 className="font-display font-extrabold text-base text-teal-950">
               Vocabulary Flashcards
             </h3>
-            <p className="text-xs text-teal-700 font-medium leading-relaxed">
-              Strengthen your memory with native pronunciations, flip flashcards, and cultural example sentences.
+            <p className="text-xs text-teal-700 leading-relaxed font-medium">
+              Review native script vocabulary, listen to authentic pronunciations, and test your recall with flipping cards.
             </p>
             <Button
               variant="outline"
               size="sm"
               fullWidth={true}
               onClick={() => navigate('/vocabulary')}
-              icon={<ArrowRight className="w-4 h-4" />}
+              icon={<ArrowRight className="w-3.5 h-3.5" />}
               iconPosition="right"
               className="text-xs py-2"
             >
-              Practice Flashcards
+              Start Flashcards Practice
             </Button>
           </div>
 
-          {/* Daily Challenge Card */}
-          <div className="bg-gradient-to-br from-gold-50 to-cream-100 border-2 border-gold-300 rounded-3xl p-6 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-gold-700 uppercase tracking-wider">
-              <Trophy className="w-4 h-4 text-gold-600" />
-              <span>Daily Challenge</span>
-            </div>
-            <h3 className="font-display font-extrabold text-lg text-teal-950">
-              Complete 2 Lessons Today
-            </h3>
-            <p className="text-xs text-teal-700 font-medium leading-relaxed">
-              Earn an extra +50 XP bonus and unlock the next cultural milestone in {selectedLanguage.name}.
-            </p>
-            <div className="pt-2">
-              <ProgressBar current={completedCount} total={2} color="gold" height="sm" showPercentage={true} />
-            </div>
-          </div>
-
-          {/* Cultural Heritage Highlight */}
-          <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-6 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-forest-700 uppercase tracking-wider">
-              <Compass className="w-4 h-4 text-forest-600" />
-              <span>Cultural Heritage</span>
-            </div>
-            <h4 className="font-display font-bold text-base text-teal-900">
-              The Sacred Grove (Sarna)
-            </h4>
-            <p className="text-xs text-teal-700 leading-relaxed font-medium">
-              In tribal cosmology, nature is an elder kin to cherish. Every village preserves a virgin forest patch called Sarna where the Sal trees bloom unpruned.
-            </p>
-            <Link
-              to="/community"
-              className="text-xs font-bold text-forest-700 hover:underline inline-block pt-1"
-            >
-              Explore Tribal Stories & Folktales →
-            </Link>
-          </div>
-
-          {/* Badges Preview */}
-          <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-6 shadow-sm space-y-4">
+          {/* Community Folklore Shortcut */}
+          <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-5 sm:p-6 shadow-earthy space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="font-display font-bold text-sm text-teal-900">
-                Badges & Milestones
-              </h4>
-              <Link to="/progress" className="text-xs font-bold text-forest-700 hover:underline">
-                View all ({ACHIEVEMENTS.length})
-              </Link>
+              <span className="text-[10px] font-bold text-terracotta-700 uppercase tracking-wider flex items-center gap-1">
+                <Users2 className="w-3.5 h-3.5" />
+                <span>Oral Traditions</span>
+              </span>
+              <span className="text-xs font-bold text-terracotta-700 bg-terracotta-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Heart className="w-3 h-3 fill-current" />
+                <span>{communityContributions.length} Stories</span>
+              </span>
             </div>
-
-            <div className="grid grid-cols-3 gap-2.5">
-              {ACHIEVEMENTS.slice(0, 3).map((ach) => {
-                const isUnlocked = user?.unlockedAchievements.includes(ach.achievementId);
-                return (
-                  <div
-                    key={ach.achievementId}
-                    className={`p-2.5 rounded-2xl border flex flex-col items-center text-center transition-all ${
-                      isUnlocked
-                        ? 'bg-gold-50 border-gold-300 shadow-sm'
-                        : 'bg-cream-200/50 border-sage-200 opacity-50'
-                    }`}
-                    title={ach.title}
-                  >
-                    <span className="text-2xl mb-1">{ach.icon}</span>
-                    <span className="text-[10px] font-bold text-teal-900 truncate w-full">
-                      {ach.title}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            <h3 className="font-display font-extrabold text-base text-teal-950">
+              Community Oral Heritage
+            </h3>
+            <p className="text-xs text-teal-700 leading-relaxed font-medium">
+              Explore authentic folklore, creation legends, and harvest songs contributed by tribal elders and custodians.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth={true}
+              onClick={() => navigate('/community')}
+              icon={<Compass className="w-3.5 h-3.5 text-forest-600" />}
+              className="text-xs py-2"
+            >
+              Read Tribal Stories
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Guidebook Modal */}
-      <Modal
-        isOpen={isGuidebookOpen}
-        onClose={() => setIsGuidebookOpen(false)}
-        title={`Unit 1 Guidebook: ${selectedLanguage.name}`}
-        maxWidth="lg"
-      >
-        <div className="space-y-5">
-          <div className="bg-forest-50 border border-forest-200 p-4 rounded-2xl text-xs text-forest-800 leading-relaxed">
-            <p className="font-bold mb-1 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-gold-500" />
-              <span>Cultural Insight & Etiquette</span>
-            </p>
-            {selectedLanguage.culturalNote} Traditional greetings honor the spirit in all beings and nature.
+      {/* 5. Achievements Showcase */}
+      <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-6 sm:p-8 shadow-earthy space-y-5">
+        <div className="flex items-center justify-between border-b-2 border-sage-200 pb-3">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-gold-600" />
+            <h3 className="font-display font-extrabold text-lg text-teal-950">
+              Cultural Milestones & Badges
+            </h3>
           </div>
-
-          <div>
-            <h4 className="font-display font-extrabold text-sm text-teal-900 uppercase tracking-wider mb-3">
-              Key Phrases in this Unit
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {getGuidebookPhrases().map((phrase, i) => (
-                <div
-                  key={i}
-                  className="p-3 bg-cream-50 border border-sage-200 rounded-2xl flex flex-col justify-between"
-                >
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-display font-bold text-base text-forest-800">
-                      {phrase.native}
-                    </span>
-                    <span className="text-xs font-semibold text-gold-600 font-mono">
-                      {phrase.roman}
-                    </span>
-                  </div>
-                  <p className="text-xs text-teal-700 mt-1.5 font-medium">
-                    {phrase.meaning}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-sage-200 flex justify-end">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsGuidebookOpen(false)}
-              icon={<CheckCircle2 className="w-4 h-4" />}
-            >
-              Got it, let's learn!
-            </Button>
-          </div>
+          <Link to="/progress" className="text-xs font-bold text-forest-700 hover:underline">
+            View All Badges ({ACHIEVEMENTS.length}) →
+          </Link>
         </div>
-      </Modal>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {ACHIEVEMENTS.map((ach) => {
+            const isUnlocked = user?.unlockedAchievements.includes(ach.achievementId);
+            return (
+              <div
+                key={ach.achievementId}
+                className={`p-3.5 rounded-2xl border-2 flex flex-col items-center text-center transition-all ${
+                  isUnlocked
+                    ? 'bg-gold-50 border-gold-300 shadow-sm'
+                    : 'bg-cream-200/50 border-sage-200 opacity-60'
+                }`}
+                title={ach.description}
+              >
+                <span className="text-3xl mb-1.5">{ach.icon}</span>
+                <span className="text-xs font-bold text-teal-950 truncate w-full">
+                  {ach.title}
+                </span>
+                <span className="text-[10px] text-teal-600 font-semibold mt-0.5">
+                  {isUnlocked ? 'Unlocked ✨' : `+${ach.xpReward} XP`}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };
