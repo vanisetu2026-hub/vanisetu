@@ -11,6 +11,44 @@ interface ExerciseRendererProps {
   onNext: (isCorrect: boolean) => void;
 }
 
+// Helper to perform Fisher-Yates shuffle
+const shuffleList = <T,>(array: T[]): T[] => {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
+// Generates randomized matching pairs ensuring no predictable row-by-row or reverse mirror patterns
+const getShuffledPairs = (pairs?: { tribal: string; translation: string }[]) => {
+  if (!pairs || pairs.length === 0) return { tribal: [], translations: [] };
+
+  const tribal = shuffleList(pairs.map((p) => p.tribal));
+  let translations = shuffleList(pairs.map((p) => p.translation));
+
+  if (pairs.length > 2) {
+    for (let attempts = 0; attempts < 25; attempts++) {
+      // Avoid straight horizontal row matches where tribal[idx] directly matches translations[idx]
+      const hasDirectMatches = tribal.some(
+        (t, idx) => pairs.find((p) => p.tribal === t)?.translation === translations[idx]
+      );
+      // Avoid complete reverse alignment (4, 3, 2, 1 mirror cross)
+      const isExactReverse = tribal.every(
+        (t, idx) => pairs.find((p) => p.tribal === t)?.translation === translations[translations.length - 1 - idx]
+      );
+
+      if (!hasDirectMatches && !isExactReverse) {
+        break;
+      }
+      translations = shuffleList(pairs.map((p) => p.translation));
+    }
+  }
+
+  return { tribal, translations };
+};
+
 export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
   exercise,
   languageId,
@@ -20,6 +58,12 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
   const [matchedPairs, setMatchedPairs] = useState<{ tribal: string; translation: string }[]>([]);
   const [selectedTribalPair, setSelectedTribalPair] = useState<string | null>(null);
   const [selectedTranslationPair, setSelectedTranslationPair] = useState<string | null>(null);
+  const [shuffledTribalWords, setShuffledTribalWords] = useState<string[]>(() =>
+    exercise.type === 'match_pairs' ? getShuffledPairs(exercise.pairs).tribal : []
+  );
+  const [shuffledTranslations, setShuffledTranslations] = useState<string[]>(() =>
+    exercise.type === 'match_pairs' ? getShuffledPairs(exercise.pairs).translations : []
+  );
   const [arrangedWords, setArrangedWords] = useState<string[]>([]);
   const [hasChecked, setHasChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -35,7 +79,16 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
     setHasChecked(false);
     setIsCorrect(false);
     setShowHint(false);
-  }, [exercise.exerciseId]);
+
+    if (exercise.type === 'match_pairs' && exercise.pairs && exercise.pairs.length > 0) {
+      const { tribal, translations } = getShuffledPairs(exercise.pairs);
+      setShuffledTribalWords(tribal);
+      setShuffledTranslations(translations);
+    } else {
+      setShuffledTribalWords([]);
+      setShuffledTranslations([]);
+    }
+  }, [exercise.exerciseId, exercise.type, exercise.pairs]);
 
   const canCheck = useCallback(() => {
     if (hasChecked) return false;
@@ -301,15 +354,15 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
                 <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-forest-700 block text-center">
                   Tribal Language
                 </span>
-                {exercise.pairs?.map((pair, idx) => {
-                  const isMatched = matchedPairs.some((p) => p.tribal === pair.tribal);
-                  const isSelected = selectedTribalPair === pair.tribal;
+                {(shuffledTribalWords.length > 0 ? shuffledTribalWords : exercise.pairs?.map((p) => p.tribal) || []).map((tribalWord, idx) => {
+                  const isMatched = matchedPairs.some((p) => p.tribal === tribalWord);
+                  const isSelected = selectedTribalPair === tribalWord;
                   return (
                     <button
-                      key={idx}
+                      key={`${tribalWord}-${idx}`}
                       type="button"
                       disabled={isMatched || hasChecked}
-                      onClick={() => handlePairSelection(pair.tribal, null)}
+                      onClick={() => handlePairSelection(tribalWord, null)}
                       className={`
                         w-full min-h-[46px] p-2.5 sm:p-3.5 rounded-2xl font-bold text-xs sm:text-sm text-center border-2 transition-all select-none touch-manipulation
                         ${
@@ -321,7 +374,7 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
                         }
                       `}
                     >
-                      {pair.tribal}
+                      {tribalWord}
                     </button>
                   );
                 })}
@@ -332,33 +385,30 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
                 <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-forest-700 block text-center">
                   Meaning
                 </span>
-                {exercise.pairs
-                  ?.slice()
-                  .reverse()
-                  .map((pair, idx) => {
-                    const isMatched = matchedPairs.some((p) => p.translation === pair.translation);
-                    const isSelected = selectedTranslationPair === pair.translation;
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        disabled={isMatched || hasChecked}
-                        onClick={() => handlePairSelection(null, pair.translation)}
-                        className={`
-                          w-full min-h-[46px] p-2.5 sm:p-3.5 rounded-2xl font-bold text-xs sm:text-sm text-center border-2 transition-all select-none touch-manipulation
-                          ${
-                            isMatched
-                              ? 'bg-forest-100 border-forest-400 text-forest-700 opacity-60 cursor-not-allowed'
-                              : isSelected
-                              ? 'bg-gold-200 border-gold-500 text-teal-900 shadow-[0_3px_0_#CF841C]'
-                              : 'bg-cream-100 border-sage-300 hover:border-forest-400 text-teal-900 shadow-[0_3px_0_#C7D5CB]'
-                          }
-                        `}
-                      >
-                        {pair.translation}
-                      </button>
-                    );
-                  })}
+                {(shuffledTranslations.length > 0 ? shuffledTranslations : exercise.pairs?.map((p) => p.translation) || []).map((translation, idx) => {
+                  const isMatched = matchedPairs.some((p) => p.translation === translation);
+                  const isSelected = selectedTranslationPair === translation;
+                  return (
+                    <button
+                      key={`${translation}-${idx}`}
+                      type="button"
+                      disabled={isMatched || hasChecked}
+                      onClick={() => handlePairSelection(null, translation)}
+                      className={`
+                        w-full min-h-[46px] p-2.5 sm:p-3.5 rounded-2xl font-bold text-xs sm:text-sm text-center border-2 transition-all select-none touch-manipulation
+                        ${
+                          isMatched
+                            ? 'bg-forest-100 border-forest-400 text-forest-700 opacity-60 cursor-not-allowed'
+                            : isSelected
+                            ? 'bg-gold-200 border-gold-500 text-teal-900 shadow-[0_3px_0_#CF841C]'
+                            : 'bg-cream-100 border-sage-300 hover:border-forest-400 text-teal-900 shadow-[0_3px_0_#C7D5CB]'
+                        }
+                      `}
+                    >
+                      {translation}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
