@@ -23,6 +23,7 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
   const [arrangedWords, setArrangedWords] = useState<string[]>([]);
   const [hasChecked, setHasChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
   // Reset state when exercise changes
   useEffect(() => {
@@ -33,6 +34,7 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
     setArrangedWords([]);
     setHasChecked(false);
     setIsCorrect(false);
+    setShowHint(false);
   }, [exercise.exerciseId]);
 
   const canCheck = useCallback(() => {
@@ -157,6 +159,11 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
         {/* 1. Learn a New Word */}
         {exercise.type === 'learn_word' && (
           <div className="bg-cream-100 border-2 sm:border-3 border-sage-300 rounded-3xl p-5 sm:p-8 text-center shadow-earthy space-y-3 sm:space-y-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold-200/90 text-gold-900 border border-gold-400 text-xs font-extrabold uppercase tracking-wider mb-1">
+              <Sparkles className="w-3.5 h-3.5 fill-current text-gold-700" />
+              <span>New Vocabulary Introduced</span>
+            </div>
+
             <div className="flex items-center justify-center">
               <AudioPlayer
                 text={exercise.tribalWord || ''}
@@ -190,11 +197,14 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
             </div>
             {exercise.exampleSentence && (
               <div className="p-3 bg-cream-50 rounded-2xl border border-sage-200 text-left text-xs space-y-1">
-                <span className="font-bold text-forest-700 block uppercase tracking-wider text-[10px]">Example:</span>
+                <span className="font-bold text-forest-700 block uppercase tracking-wider text-[10px]">Context Example:</span>
                 <p className="font-bold text-teal-900">{exercise.exampleSentence.tribal}</p>
                 <p className="text-teal-700 italic">&ldquo;{exercise.exampleSentence.translation}&rdquo;</p>
               </div>
             )}
+            <div className="pt-1 text-[11px] font-semibold text-forest-700 bg-forest-50/80 px-3 py-1.5 rounded-xl border border-forest-200 inline-block">
+              ✓ Study this word carefully. You will be tested on it in the next questions.
+            </div>
           </div>
         )}
 
@@ -221,6 +231,17 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
                     </h3>
                   </div>
                 </div>
+
+                {exercise.englishMeaning && (
+                  <button
+                    type="button"
+                    onClick={() => setShowHint(!showHint)}
+                    className="text-xs font-bold text-forest-700 hover:text-forest-900 bg-forest-50 hover:bg-forest-100 border border-forest-200 px-2.5 py-1 rounded-xl transition-colors shrink-0"
+                    title="Click for taught vocabulary hint"
+                  >
+                    {showHint ? `Hint: ${exercise.englishMeaning}` : '💡 Hint'}
+                  </button>
+                )}
               </div>
             )}
 

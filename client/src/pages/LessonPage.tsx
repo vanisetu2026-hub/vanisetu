@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLearning } from '../contexts/LearningContext';
-import { EXERCISES, LESSONS } from '../data/tribalData';
+import { EXERCISES, LESSONS, LESSON_INTRODUCED_VOCABULARY } from '../data/tribalData';
 import { ExerciseRenderer } from '../components/lesson/ExerciseRenderer';
 import { ProgressBar } from '../components/common/ProgressBar';
-import { ArrowLeft, Sparkles, X } from 'lucide-react';
+import { Modal } from '../components/common/Modal';
+import { Sparkles, X, BookOpen, ShieldCheck } from 'lucide-react';
 
 export const LessonPage: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
@@ -13,10 +14,12 @@ export const LessonPage: React.FC = () => {
 
   const lesson = LESSONS.find((l) => l.lessonId === lessonId) || LESSONS[0];
   const exercises = EXERCISES[lesson.lessonId] || EXERCISES['mun_l1'];
+  const introducedWords = LESSON_INTRODUCED_VOCABULARY[lesson.lessonId] || [];
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [startTime] = useState<number>(Date.now());
+  const [isVocabModalOpen, setIsVocabModalOpen] = useState(false);
 
   const currentExercise = exercises[currentIndex];
 
@@ -81,12 +84,30 @@ export const LessonPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Lesson Subtitle / Counter */}
-        <div className="flex items-center justify-between text-xs font-bold text-teal-700 px-2">
-          <span>{lesson.title}</span>
-          <span>
-            Question {currentIndex + 1} of {exercises.length}
-          </span>
+        {/* Lesson Subtitle / Counter / Target Words */}
+        <div className="flex items-center justify-between text-xs font-bold text-teal-700 px-2 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <span>{lesson.title}</span>
+            {introducedWords.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsVocabModalOpen(true)}
+                className="inline-flex items-center gap-1 bg-cream-100 hover:bg-cream-50 border border-sage-300 text-forest-700 px-2.5 py-0.5 rounded-xl text-[11px] font-bold shadow-sm transition-colors"
+                title="View vocabulary taught in this lesson"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-gold-600" />
+                <span>Target Words ({introducedWords.length})</span>
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-forest-700 bg-forest-50 border border-forest-200 px-2 py-0.5 rounded-full font-extrabold hidden sm:inline">
+              ✓ Prerequisite Scaffolded
+            </span>
+            <span>
+              Step {currentIndex + 1} of {exercises.length}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -101,6 +122,48 @@ export const LessonPage: React.FC = () => {
           />
         )}
       </div>
+
+      {/* Target Vocabulary Modal */}
+      <Modal
+        isOpen={isVocabModalOpen}
+        onClose={() => setIsVocabModalOpen(false)}
+        title={`Lesson Vocabulary: ${lesson.title}`}
+        maxWidth="md"
+      >
+        <div className="space-y-3">
+          <div className="p-3 rounded-2xl bg-forest-50 border border-forest-200 text-xs text-forest-900 leading-relaxed flex items-start gap-2">
+            <ShieldCheck className="w-4 h-4 text-forest-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-extrabold mb-0.5">Strict Prerequisite Scaffolding Active</p>
+              <p className="text-[11px] text-forest-700">
+                All questions, translations, and answer choices in this lesson only test words you have explicitly learned.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+            {introducedWords.map((item, idx) => (
+              <div key={idx} className="p-3 bg-cream-50 rounded-2xl border border-sage-200 flex items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-extrabold text-base text-forest-900 font-display">{item.word}</span>
+                    {item.nativeScript && item.nativeScript !== item.word && (
+                      <span className="text-xs font-bold text-forest-700 font-mono">({item.nativeScript})</span>
+                    )}
+                  </div>
+                  {item.transliteration && item.transliteration !== item.word && (
+                    <p className="text-[11px] text-teal-600 font-mono">/{item.transliteration}/</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-teal-900">{item.englishMeaning}</p>
+                  <p className="text-[10px] text-teal-600 font-semibold">{item.hindiMeaning}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Modal>
 
       {/* Footer Cultural Insight Note */}
       {lesson.culturalInsight && (

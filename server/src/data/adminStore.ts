@@ -127,6 +127,7 @@ export interface AdminQuestion {
   xpReward: number;
   sequence: number;
   status: 'draft' | 'published';
+  isScaffolded?: boolean; // Validated against prerequisite vocabulary
   createdBy: string;
   updatedBy: string;
   createdAt: string;

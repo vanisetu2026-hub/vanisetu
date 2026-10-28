@@ -17,9 +17,12 @@ import {
   X,
   Volume2,
   Image as ImageIcon,
-  Sparkles
+  Sparkles,
+  BookOpen,
+  ShieldCheck,
 } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
+import { LESSON_INTRODUCED_VOCABULARY } from '../../data/tribalData';
 import type { AdminQuestion, AdminLesson, AdminLanguage, QuestionType } from '../../types';
 
 const QUESTION_TYPES: { id: QuestionType; label: string; icon: string; desc: string }[] = [
@@ -464,6 +467,9 @@ export const AdminQuestionsPage: React.FC = () => {
                         <p className="font-medium text-vanisetu-primary line-clamp-2">{q.questionText}</p>
                         <div className="flex items-center gap-2 mt-1 text-[11px] text-vanisetu-text-muted">
                           <span className="font-mono text-gray-400">{q.questionId}</span>
+                          <span className="inline-flex items-center gap-0.5 text-forest-700 bg-forest-50 px-1.5 py-0.5 rounded text-[10px] font-semibold border border-forest-200" title="Strict prerequisite vocabulary compliant">
+                            <ShieldCheck className="w-2.5 h-2.5 text-forest-600" /> Scaffolded
+                          </span>
                           {q.audioURL && (
                             <span className="inline-flex items-center gap-0.5 text-blue-600">
                               <Volume2 className="w-3 h-3" /> Audio
@@ -644,6 +650,39 @@ export const AdminQuestionsPage: React.FC = () => {
                   </select>
                 </div>
               </div>
+
+              {/* Prerequisite Scaffolding Inspector */}
+              {formData.lessonId && LESSON_INTRODUCED_VOCABULARY[formData.lessonId] && (
+                <div className="p-3.5 bg-forest-50/70 border border-forest-200 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-forest-900">
+                    <span className="flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-forest-600" />
+                      <span>Introduced Lesson Vocabulary (Prerequisite Rule)</span>
+                    </span>
+                    <span className="text-[10px] bg-forest-100 text-forest-800 px-2 py-0.5 rounded font-extrabold">
+                      {LESSON_INTRODUCED_VOCABULARY[formData.lessonId].length} Taught Words
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-forest-700 leading-tight">
+                    Strict Prerequisite Rule: All questions, answers, and distractors must strictly use only words introduced in this lesson or previous lessons.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {LESSON_INTRODUCED_VOCABULARY[formData.lessonId].map((v, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-forest-300 text-xs text-forest-900 font-semibold shadow-xs"
+                        title={`${v.englishMeaning} / ${v.hindiMeaning}`}
+                      >
+                        <strong className="text-forest-700">{v.word}</strong>
+                        {v.nativeScript && v.nativeScript !== v.word && (
+                          <span className="text-[10px] text-gray-500 font-mono">({v.nativeScript})</span>
+                        )}
+                        <span className="text-[10px] text-gray-400">• {v.englishMeaning}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">

@@ -526,6 +526,18 @@ export const getAdminQuestions = (req: AdminAuthenticatedRequest, res: Response)
   res.json({ success: true, count: list.length, data: list.sort((a, b) => a.sequence - b.sequence) });
 };
 
+// Strict Prerequisite Vocabulary Registry per Lesson
+export const LESSON_VOCABULARY_REGISTRY: Record<string, string[]> = {
+  mun_l1: ['Johar', 'Bugigea', 'Haga', 'Marang'],
+  mun_l2: ['Johar', 'Bugigea', 'Haga', 'Marang', 'Senenape', 'Orobu', 'Napama', 'Gapa'],
+  mun_l3: ['Johar', 'Bugigea', 'Haga', 'Marang', 'Senenape', 'Orobu', 'Napama', 'Gapa', 'Aing', 'Am', 'Nutum', 'Disum'],
+  san_l1: ['ᱡᱚᱦᱟᱨ', 'ᱵᱮᱥ', 'ᱥᱟᱨᱦᱟᱣ', 'ᱟᱹᱰᱤ', 'Johar', 'Besh', 'Sarhao', 'Adi'],
+  san_l2: ['ᱡᱚᱦᱟᱨ', 'ᱵᱮᱥ', 'ᱥᱟᱨᱦᱟᱣ', 'ᱟᱹᱰᱤ', 'ᱵᱤᱨ', 'ᱫᱟᱜ', 'ᱥᱟᱨᱡᱚᱢ', 'ᱵᱟᱦᱟ', 'Bir', "Da'", 'Sarjom', 'Baha'],
+  san_l3: ['ᱡᱚᱦᱟᱨ', 'ᱵᱮᱥ', 'ᱥᱟᱨᱦᱟᱣ', 'ᱟᱹᱰᱤ', 'ᱵᱤᱨ', 'ᱫᱟᱜ', 'ᱥᱟᱨᱡᱚᱢ', 'ᱵᱟᱦᱟ', 'ᱟᱭᱳ', 'ᱟᱯᱩ', 'ᱵᱚᱠᱚ', 'ᱚᱲᱟᱜ', 'Ayo', 'Apu', 'Boko', "Orak'"],
+  ho_l1: ['Johar', 'Chilkan', 'Bugite', 'Menaña'],
+  kur_l1: ['God Lagi', "Ek'as", 'Kode', 'Rahi'],
+};
+
 export const createAdminQuestion = (req: AdminAuthenticatedRequest, res: Response) => {
   const {
     lessonId,
@@ -564,6 +576,12 @@ export const createAdminQuestion = (req: AdminAuthenticatedRequest, res: Respons
     return;
   }
 
+  const allowed = LESSON_VOCABULARY_REGISTRY[lessonId || 'mun_l1'] || [];
+  const targetWord = req.body.tribalWord || '';
+  const isScaffolded = !targetWord || allowed.some(
+    (w) => targetWord.toLowerCase().includes(w.toLowerCase()) || w.toLowerCase().includes(targetWord.toLowerCase())
+  );
+
   const questionId = `q_${uuidv4().substring(0, 8)}`;
   const newQuestion: AdminQuestion = {
     questionId,
@@ -588,6 +606,7 @@ export const createAdminQuestion = (req: AdminAuthenticatedRequest, res: Respons
     xpReward: Number(xpReward) || 15,
     sequence: adminStore.questions.length + 1,
     status: req.body.status || 'published',
+    isScaffolded,
     createdBy: req.adminUser?.uid || 'admin',
     updatedBy: req.adminUser?.uid || 'admin',
     createdAt: new Date().toISOString(),
@@ -619,9 +638,17 @@ export const updateAdminQuestion = (req: AdminAuthenticatedRequest, res: Respons
   }
 
   const previous = { ...adminStore.questions[idx] };
+  const targetLesson = req.body.lessonId || previous.lessonId || 'mun_l1';
+  const allowed = LESSON_VOCABULARY_REGISTRY[targetLesson] || [];
+  const targetWord = req.body.tribalWord !== undefined ? req.body.tribalWord : previous.tribalWord || '';
+  const isScaffolded = !targetWord || allowed.some(
+    (w) => targetWord.toLowerCase().includes(w.toLowerCase()) || w.toLowerCase().includes(targetWord.toLowerCase())
+  );
+
   const updated: AdminQuestion = {
     ...previous,
     ...req.body,
+    isScaffolded,
     questionId: id,
     updatedBy: req.adminUser?.uid || 'admin',
     updatedAt: new Date().toISOString(),

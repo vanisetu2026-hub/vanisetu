@@ -92,6 +92,15 @@ export interface Exercise {
   order: number;
 }
 
+export interface IntroducedWord {
+  word: string;
+  nativeScript?: string;
+  transliteration?: string;
+  englishMeaning: string;
+  hindiMeaning: string;
+  pronunciation?: string;
+}
+
 export interface VocabularyItem {
   vocabularyId: string;
   languageId: string;
@@ -276,6 +285,7 @@ export interface AdminQuestion {
   xpReward: number;
   sequence: number;
   status: 'draft' | 'published';
+  isScaffolded?: boolean;
   createdBy: string;
   updatedBy: string;
   createdAt: string;
