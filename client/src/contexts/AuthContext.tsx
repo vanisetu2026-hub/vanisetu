@@ -6,6 +6,10 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
@@ -18,6 +22,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   loginAsGuest: () => void;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<UserProfile>) => Promise<void>;
@@ -74,28 +79,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Initialize session from localStorage or Firebase
   useEffect(() => {
     if (isFirebaseConfigured && auth) {
+      // Check redirect result if user returned from mobile Google redirect sign-in
+      getRedirectResult(auth).catch((err) => {
+        console.warn('Redirect sign-in check:', err);
+      });
+
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
           try {
+            const emailKey = (firebaseUser.email || '').toLowerCase().trim();
+            const role = ADMIN_ACCOUNTS[emailKey] || 'learner';
+
             if (db) {
               const docRef = doc(db, 'users', firebaseUser.uid);
               const docSnap = await getDoc(docRef);
               if (docSnap.exists()) {
                 const profile = docSnap.data() as UserProfile;
-                const emailKey = profile.email.toLowerCase();
-                const role = profile.role || ADMIN_ACCOUNTS[emailKey] || 'learner';
-                setUser({ ...profile, role });
+                const mergedProfile: UserProfile = {
+                  ...profile,
+                  name: profile.name || firebaseUser.displayName || 'Learner',
+                  photoURL: firebaseUser.photoURL || profile.photoURL,
+                  role: profile.role || role,
+                };
+                setUser(mergedProfile);
+                localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(mergedProfile));
+                if (mergedProfile.role && mergedProfile.role !== 'learner') {
+                  sessionStorage.setItem('vanisetu_admin_key', 'VANISETU_ADMIN_2026');
+                  localStorage.setItem('vanisetu_active_admin_role', mergedProfile.role);
+                }
                 setLoading(false);
                 return;
               }
             }
+
             // Firebase authenticated but initial doc not created yet:
-            const emailKey = (firebaseUser.email || '').toLowerCase();
-            const role = ADMIN_ACCOUNTS[emailKey] || 'learner';
             const defaultProfile: UserProfile = {
               uid: firebaseUser.uid,
-              name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Learner',
+              name: firebaseUser.displayName || emailKey.split('@')[0] || 'Learner',
               email: firebaseUser.email || '',
+              photoURL: firebaseUser.photoURL || undefined,
               role,
               selectedLanguage: 'mundari',
               totalXP: 0,
@@ -107,6 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: new Date().toISOString(),
               isGuest: false,
             };
+
             if (db) {
               try {
                 await setDoc(doc(db, 'users', firebaseUser.uid), defaultProfile);
@@ -115,6 +138,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             }
             setUser(defaultProfile);
+            localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(defaultProfile));
+            if (role !== 'learner') {
+              sessionStorage.setItem('vanisetu_admin_key', 'VANISETU_ADMIN_2026');
+              localStorage.setItem('vanisetu_active_admin_role', role);
+            }
           } catch (e) {
             console.error('Error fetching Firestore user:', e);
             fallbackToLocalStorage();
@@ -360,6 +388,144 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    try {
+      if (!isFirebaseConfigured || !auth) {
+        throw new Error('Firebase configuration missing. Please check VITE_FIREBASE_API_KEY in client/.env.');
+      }
+
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      let userCred;
+      try {
+        userCred = await signInWithPopup(auth, provider);
+      } catch (popupErr: unknown) {
+        const errObj = popupErr as { code?: string; message?: string };
+        if (errObj.code === 'auth/popup-closed-by-user') {
+          throw new Error('Google Sign-In was cancelled.');
+        }
+        if (errObj.code === 'auth/popup-blocked') {
+          // If popup is blocked by the browser, attempt redirect
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+        if (errObj.code === 'auth/unauthorized-domain') {
+          throw new Error(
+            'The current domain is not authorized in Firebase. Please add this domain to Firebase Console > Authentication > Settings > Authorized domains.'
+          );
+        }
+        if (errObj.code === 'auth/network-request-failed') {
+          throw new Error('Network error connecting to Google. Please check your internet connection.');
+        }
+        throw new Error(errObj.message || 'Google Sign-In failed. Please try again.');
+      }
+
+      const firebaseUser = userCred.user;
+      const emailKey = (firebaseUser.email || '').toLowerCase().trim();
+      const detectedRole: AdminRole | 'learner' = ADMIN_ACCOUNTS[emailKey] || 'learner';
+
+      let userProfile: UserProfile;
+
+      if (db) {
+        try {
+          const docRef = doc(db, 'users', firebaseUser.uid);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const existing = docSnap.data() as UserProfile;
+            userProfile = {
+              ...existing,
+              name: existing.name || firebaseUser.displayName || 'Learner',
+              photoURL: firebaseUser.photoURL || existing.photoURL,
+              role: existing.role || detectedRole,
+            };
+            try {
+              await updateDoc(docRef, {
+                photoURL: userProfile.photoURL,
+                lastLearningDate: new Date().toISOString(),
+              });
+            } catch (uErr) {
+              console.warn('Could not update Firestore user doc:', uErr);
+            }
+          } else {
+            userProfile = {
+              uid: firebaseUser.uid,
+              name: firebaseUser.displayName || emailKey.split('@')[0] || 'Learner',
+              email: emailKey,
+              photoURL: firebaseUser.photoURL || undefined,
+              role: detectedRole,
+              selectedLanguage: 'mundari',
+              totalXP: 0,
+              currentStreak: 0,
+              longestStreak: 0,
+              dailyGoal: 50,
+              completedLessons: [],
+              unlockedAchievements: [],
+              createdAt: new Date().toISOString(),
+              isGuest: false,
+            };
+            try {
+              await setDoc(docRef, userProfile);
+            } catch (sErr) {
+              console.warn('Could not setDoc in Firestore:', sErr);
+            }
+          }
+        } catch (dbErr) {
+          console.warn('Firestore read error during Google sign-in:', dbErr);
+          userProfile = {
+            uid: firebaseUser.uid,
+            name: firebaseUser.displayName || emailKey.split('@')[0] || 'Learner',
+            email: emailKey,
+            photoURL: firebaseUser.photoURL || undefined,
+            role: detectedRole,
+            selectedLanguage: 'mundari',
+            totalXP: 0,
+            currentStreak: 0,
+            longestStreak: 0,
+            dailyGoal: 50,
+            completedLessons: [],
+            unlockedAchievements: [],
+            createdAt: new Date().toISOString(),
+            isGuest: false,
+          };
+        }
+      } else {
+        userProfile = {
+          uid: firebaseUser.uid,
+          name: firebaseUser.displayName || emailKey.split('@')[0] || 'Learner',
+          email: emailKey,
+          photoURL: firebaseUser.photoURL || undefined,
+          role: detectedRole,
+          selectedLanguage: 'mundari',
+          totalXP: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          dailyGoal: 50,
+          completedLessons: [],
+          unlockedAchievements: [],
+          createdAt: new Date().toISOString(),
+          isGuest: false,
+        };
+      }
+
+      setUser(userProfile);
+      localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(userProfile));
+
+      if (detectedRole !== 'learner') {
+        sessionStorage.setItem('vanisetu_admin_key', 'VANISETU_ADMIN_2026');
+        localStorage.setItem('vanisetu_active_admin_role', detectedRole);
+      } else {
+        sessionStorage.removeItem('vanisetu_admin_key');
+      }
+
+      saveLocalAccount(userProfile);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loginAsGuest = () => {
     const guestUser: UserProfile = {
       uid: 'guest_' + Math.random().toString(36).substring(2, 9),
@@ -440,6 +606,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         login,
         signup,
+        signInWithGoogle,
         loginAsGuest,
         logout,
         updateUser,

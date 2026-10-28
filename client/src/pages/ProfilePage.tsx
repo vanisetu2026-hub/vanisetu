@@ -69,8 +69,14 @@ export const ProfilePage: React.FC = () => {
       <div className="bg-cream-100 border-3 border-sage-200 rounded-3xl p-6 sm:p-8 shadow-earthy">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <div className="w-20 h-20 rounded-3xl bg-forest-600 border-4 border-forest-700 text-cream-100 flex items-center justify-center font-display font-extrabold text-3xl shadow-sm shrink-0">
-              {user?.name ? user.name.charAt(0).toUpperCase() : <User className="w-10 h-10" />}
+            <div className="w-20 h-20 rounded-3xl bg-forest-600 border-4 border-forest-700 text-cream-100 flex items-center justify-center font-display font-extrabold text-3xl shadow-sm shrink-0 overflow-hidden">
+              {user?.photoURL ? (
+                <img src={user.photoURL} alt={user.name || 'User avatar'} className="w-full h-full object-cover" />
+              ) : user?.name ? (
+                user.name.charAt(0).toUpperCase()
+              ) : (
+                <User className="w-10 h-10" />
+              )}
             </div>
 
             <div className="space-y-1">

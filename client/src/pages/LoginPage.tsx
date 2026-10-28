@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Input } from '../components/common/Input';
 import { PasswordInput } from '../components/common/PasswordInput';
 import { Button } from '../components/common/Button';
+import { GoogleSignInButton } from '../components/common/GoogleSignInButton';
 import { useNotification } from '../contexts/NotificationContext';
 import { Mail, ArrowRight, UserCheck } from 'lucide-react';
 
@@ -13,8 +14,9 @@ export const LoginPage: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
 
-  const { login, loginAsGuest } = useAuth();
+  const { login, signInWithGoogle, loginAsGuest } = useAuth();
   const { addToast } = useNotification();
   const navigate = useNavigate();
 
@@ -49,6 +51,30 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setIsGoogleSubmitting(true);
+    try {
+      await signInWithGoogle();
+      addToast({
+        type: 'success',
+        title: 'Welcome to VANISETU! 🌟',
+        message: 'Successfully signed in with Google.',
+      });
+      navigate('/dashboard');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Google sign-in failed. Please try again.';
+      setError(msg);
+      addToast({
+        type: 'error',
+        title: 'Sign In Failed',
+        message: msg,
+      });
+    } finally {
+      setIsGoogleSubmitting(false);
+    }
+  };
+
   const handleGuestLogin = () => {
     loginAsGuest();
     addToast({
@@ -77,6 +103,23 @@ export const LoginPage: React.FC = () => {
             {error}
           </div>
         )}
+
+        {/* 1-Click Sign in with Google */}
+        <div className="mb-5 space-y-4">
+          <GoogleSignInButton
+            onClick={handleGoogleSignIn}
+            isLoading={isGoogleSubmitting}
+            text="Sign in with Google"
+          />
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 h-px bg-sage-200" />
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-500">
+              or with email
+            </span>
+            <div className="flex-1 h-px bg-sage-200" />
+          </div>
+        </div>
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">

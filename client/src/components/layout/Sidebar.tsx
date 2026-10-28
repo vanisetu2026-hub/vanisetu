@@ -127,8 +127,14 @@ export const Sidebar: React.FC = () => {
               onClick={() => navigate('/profile')}
               className="flex items-center gap-2.5 p-1.5 xl:p-2 rounded-2xl hover:bg-cream-200 cursor-pointer transition-colors"
             >
-              <div className="w-8 h-8 xl:w-9 xl:h-9 rounded-2xl bg-gold-400 border-2 border-gold-500 text-teal-900 font-extrabold flex items-center justify-center text-xs xl:text-sm shadow-sm shrink-0">
-                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              <div className="w-8 h-8 xl:w-9 xl:h-9 rounded-2xl bg-gold-400 border-2 border-gold-500 text-teal-900 font-extrabold flex items-center justify-center text-xs xl:text-sm shadow-sm shrink-0 overflow-hidden">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.name || 'User avatar'} className="w-full h-full object-cover" />
+                ) : user.name ? (
+                  user.name.charAt(0).toUpperCase()
+                ) : (
+                  'U'
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
