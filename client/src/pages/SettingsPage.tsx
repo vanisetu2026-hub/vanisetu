@@ -15,6 +15,7 @@ import {
   LogOut,
   CheckCircle2,
   Shield,
+  UserPlus,
 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
@@ -146,55 +147,80 @@ export const SettingsPage: React.FC = () => {
         </form>
       </div>
 
-      {/* 2. Security & Password */}
-      <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
-        <div className="flex items-center gap-2.5 pb-3 border-b border-sage-200">
-          <Lock className="w-5 h-5 text-gold-600" />
-          <h3 className="font-display font-extrabold text-lg text-teal-950">
-            Security & Password
-          </h3>
-        </div>
-
-        <form onSubmit={handleChangePassword} className="space-y-4">
-          <PasswordInput
-            label="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="At least 6 characters"
-          />
-
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              variant="outline"
-              size="md"
-              disabled={!newPassword}
-            >
-              Update Password
-            </Button>
+      {/* 2. Security & Password (for registered accounts) */}
+      {!user?.isGuest && (
+        <div className="bg-cream-100 border-2 border-sage-200 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-sage-200">
+            <Lock className="w-5 h-5 text-gold-600" />
+            <h3 className="font-display font-extrabold text-lg text-teal-950">
+              Security & Password
+            </h3>
           </div>
-        </form>
-      </div>
 
-      {/* 3. Session & Sign Out */}
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <PasswordInput
+              label="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 6 characters"
+            />
+
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                variant="outline"
+                size="md"
+                disabled={!newPassword}
+              >
+                Update Password
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 3. Session & Account Actions */}
       <div className="bg-terracotta-50/60 border-2 border-terracotta-200 rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h4 className="font-display font-bold text-base text-terracotta-900">
-            Account Session
+            {user?.isGuest ? 'Guest Session' : 'Account Session'}
           </h4>
           <p className="text-xs text-terracotta-700 mt-0.5">
-            Sign out of your current session on this device.
+            {user?.isGuest
+              ? 'You are currently exploring as a guest. Create an account to permanently save your progress and access all features.'
+              : 'Sign out of your current session on this device.'}
           </p>
         </div>
 
-        <Button
-          variant="danger"
-          size="md"
-          onClick={handleLogout}
-          icon={<LogOut className="w-4 h-4" />}
-        >
-          Sign Out of VANISETU
-        </Button>
+        {user?.isGuest ? (
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={handleLogout}
+              icon={<LogOut className="w-4 h-4" />}
+            >
+              Exit Guest Mode
+            </Button>
+            <Button
+              variant="gold"
+              size="md"
+              onClick={() => navigate('/signup')}
+              icon={<UserPlus className="w-4 h-4" />}
+            >
+              Create Free Account
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="danger"
+            size="md"
+            onClick={handleLogout}
+            icon={<LogOut className="w-4 h-4" />}
+          >
+            Sign Out of VANISETU
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import {
   LogOut,
   Sparkles,
   ShieldCheck,
+  UserPlus,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -118,8 +119,8 @@ export const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Footer Profile & Logout */}
-      <div className="pt-3 xl:pt-4 border-t border-sage-200 space-y-2 xl:space-y-3 mt-4">
+      {/* Footer Profile & Session Action */}
+      <div className="pt-3 xl:pt-4 border-t border-sage-200 space-y-2 xl:space-y-2.5 mt-4">
         {user ? (
           <>
             <div
@@ -130,9 +131,16 @@ export const Sidebar: React.FC = () => {
                 {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs xl:text-sm font-bold text-teal-900 truncate font-display">
-                  {user.name}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs xl:text-sm font-bold text-teal-900 truncate font-display">
+                    {user.name}
+                  </p>
+                  {user.isGuest && (
+                    <span className="text-[9px] uppercase tracking-wider font-extrabold bg-gold-200 text-gold-900 px-1.5 py-0.5 rounded-md shrink-0">
+                      Guest
+                    </span>
+                  )}
+                </div>
                 <p className="text-[11px] text-gold-600 font-semibold flex items-center gap-1">
                   <Sparkles className="w-3 h-3 fill-gold-500 shrink-0" />
                   <span>{user.totalXP} XP</span>
@@ -140,13 +148,34 @@ export const Sidebar: React.FC = () => {
               </div>
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-2 px-3 py-1.5 xl:py-2 text-xs font-bold text-terracotta-600 hover:bg-terracotta-50 rounded-xl transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
-            </button>
+            {user.isGuest ? (
+              <div className="space-y-1.5 pt-1">
+                <button
+                  onClick={() => navigate('/signup')}
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold bg-gold-400 hover:bg-gold-300 text-teal-950 rounded-xl transition-all shadow-[0_2px_0_#CF841C] active:translate-y-0.5 active:shadow-none"
+                  title="Create an account to save your learning progress"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Create Account</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-teal-700 hover:text-terracotta-600 hover:bg-cream-200/60 rounded-xl transition-colors"
+                  title="Leave guest mode and return to home page"
+                >
+                  <LogOut className="w-3 h-3" />
+                  <span>Exit Guest Mode</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-3 py-1.5 xl:py-2 text-xs font-bold text-terracotta-600 hover:bg-terracotta-50 rounded-xl transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            )}
           </>
         ) : (
           <button

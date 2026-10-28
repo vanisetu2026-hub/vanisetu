@@ -61,7 +61,7 @@ export const Navbar: React.FC<{ isLanding?: boolean }> = ({ isLanding = false })
               </button>
 
               {/* Streak */}
-              <StreakBadge streak={user.currentStreak || 1} size="sm" />
+              <StreakBadge streak={user.currentStreak || 0} size="sm" />
 
               {/* XP */}
               <XPBadge xp={user.totalXP || 0} size="sm" />

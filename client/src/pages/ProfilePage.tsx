@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLearning } from '../contexts/LearningContext';
 import { ACHIEVEMENTS } from '../data/tribalData';
@@ -16,12 +17,14 @@ import {
   Globe2,
   Edit2,
   Save,
+  UserPlus,
 } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
   const { selectedLanguage } = useLearning();
   const { addToast } = useNotification();
+  const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || '');
@@ -81,7 +84,9 @@ export const ProfilePage: React.FC = () => {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-teal-600 font-semibold">{user?.email}</p>
+              <p className="text-xs text-teal-600 font-semibold">
+                {user?.isGuest ? 'Temporary Guest Session' : user?.email}
+              </p>
               <div className="flex items-center gap-1.5 text-xs font-bold text-forest-700 pt-1">
                 <Globe2 className="w-3.5 h-3.5" />
                 <span>Learning: {selectedLanguage.name} ({selectedLanguage.nativeName})</span>
@@ -98,6 +103,28 @@ export const ProfilePage: React.FC = () => {
             {isEditing ? 'Cancel' : 'Edit Profile'}
           </Button>
         </div>
+
+        {/* Guest prompt banner */}
+        {user?.isGuest && (
+          <div className="mt-5 pt-4 border-t-2 border-sage-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gold-50/80 p-4 rounded-2xl border border-gold-300">
+            <div>
+              <p className="text-xs font-bold text-teal-950 font-display">
+                You are currently in Guest Mode
+              </p>
+              <p className="text-[11px] text-teal-700">
+                Create a free account to permanently sync and save your streaks, XP, and badges.
+              </p>
+            </div>
+            <Button
+              variant="gold"
+              size="sm"
+              onClick={() => navigate('/signup')}
+              icon={<UserPlus className="w-4 h-4" />}
+            >
+              Create Free Account
+            </Button>
+          </div>
+        )}
 
         {/* Edit Profile Form */}
         {isEditing && (
