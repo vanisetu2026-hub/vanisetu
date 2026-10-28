@@ -11,7 +11,6 @@ interface UnitHeaderBannerProps {
   onOpenGuidebook: () => void;
   onOpenSectionSelector: () => void;
   onStartActiveLesson?: () => void;
-  onScrollToActiveNode?: () => void;
 }
 
 export const UnitHeaderBanner: React.FC<UnitHeaderBannerProps> = ({
@@ -22,7 +21,6 @@ export const UnitHeaderBanner: React.FC<UnitHeaderBannerProps> = ({
   onOpenGuidebook,
   onOpenSectionSelector,
   onStartActiveLesson,
-  onScrollToActiveNode,
 }) => {
   const theme: UnitThemeConfig = UNIT_THEMES[unit.themeColor] || UNIT_THEMES.green;
 
@@ -72,7 +70,7 @@ export const UnitHeaderBanner: React.FC<UnitHeaderBannerProps> = ({
         </button>
       </div>
 
-      {/* Quick Action: Continue Next Lesson Without Scrolling */}
+      {/* Quick Action: Continue Next Lesson */}
       {activeNode && onStartActiveLesson && (
         <div className="mt-3 pt-2.5 border-t border-white/20 flex items-center justify-between gap-2 flex-wrap">
           <button
@@ -85,18 +83,6 @@ export const UnitHeaderBanner: React.FC<UnitHeaderBannerProps> = ({
             <span className="truncate max-w-[200px] sm:max-w-xs">Continue: {activeNode.title}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
-
-          {onScrollToActiveNode && (
-            <button
-              type="button"
-              onClick={onScrollToActiveNode}
-              className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-white/90 hover:text-white bg-white/15 hover:bg-white/25 px-2.5 py-1.5 rounded-xl transition-all border border-white/20"
-              title="Focus on this node on the road"
-            >
-              <Target className="w-3.5 h-3.5 text-gold-300" />
-              <span>Scroll to Node</span>
-            </button>
-          )}
         </div>
       )}
     </div>

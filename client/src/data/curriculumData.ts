@@ -1,4 +1,4 @@
-import { Section, Unit, PathNode, UnitGuidebookPhrase } from '../types';
+import { Section, Unit, PathNode, UnitGuidebookPhrase, Exercise, IntroducedWord } from '../types';
 
 export interface UnitThemeConfig {
   color: string;
@@ -595,4 +595,150 @@ export const getCurriculumSections = (languageId: string): Section[] => {
       units,
     };
   });
+};
+
+// Generates topic-specific scaffolded exercises for any unit lesson
+export const getTopicExercisesForLesson = (
+  languageId: string,
+  lessonId: string
+): { exercises: Exercise[]; introducedWords: IntroducedWord[]; lessonTitle: string } => {
+  const langKey = languageId in LANGUAGE_CURRICULUM_DATA ? languageId : 'mundari';
+  const meta = LANGUAGE_CURRICULUM_DATA[langKey];
+
+  // Parse unit number from lessonId, e.g. "santali_s1_u4_l1" -> 4, "san_l2" -> 2
+  let unitNumber = 1;
+  const match = lessonId.match(/_u(\d+)_/) || lessonId.match(/_l(\d+)/);
+  if (match) {
+    unitNumber = Math.max(1, Math.min(8, parseInt(match[1], 10)));
+  }
+
+  const uIdx = unitNumber - 1;
+  const phrases = meta.samplePhrases[uIdx] || meta.samplePhrases[0];
+  const p1 = phrases[0] || { native: 'Johar', roman: 'Johar', meaning: 'Greeting' };
+  const p2 = phrases[1] || { native: 'Besh', roman: 'Besh', meaning: 'Good' };
+  const p3 = phrases[2] || { native: 'Sarhao', roman: 'Sarhao', meaning: 'Thank you' };
+  const p4 = phrases[3] || { native: 'Napay', roman: 'Napay', meaning: 'Fine' };
+
+  const unitTitles = [
+    'Simple Greetings & Reverence',
+    'Kinship, Elders & Family Hearth',
+    'Sacred Nature, Forest & Streams',
+    'Village Food, Harvest & Fellowship',
+    'Native Script & Sound Harmony',
+    'Numbers, Natural Time & Cycles',
+    'Animals, Birds & Mother Earth',
+    'Celebrations, Songs & Harvest Milestones',
+  ];
+  const topicTitle = unitTitles[uIdx] || `Unit ${unitNumber} Mastery`;
+
+  const introducedWords: IntroducedWord[] = phrases.map((p) => ({
+    word: p.roman,
+    nativeScript: p.native,
+    transliteration: p.roman,
+    englishMeaning: p.meaning,
+    hindiMeaning: p.meaning,
+    pronunciation: p.roman,
+  }));
+
+  const exercises: Exercise[] = [
+    {
+      exerciseId: `${lessonId}_ex1`,
+      lessonId,
+      type: 'learn_word',
+      prompt: `Learn: ${p1.meaning}`,
+      tribalWord: `${p1.native} (${p1.roman})`,
+      nativeScript: p1.native,
+      transliteration: p1.roman,
+      audioPronunciationText: p1.roman,
+      englishMeaning: p1.meaning,
+      hindiMeaning: p1.meaning,
+      correctAnswer: p1.roman,
+      explanation: `"${p1.native}" signifies ${p1.meaning.toLowerCase()} in ${languageId}.`,
+      order: 1,
+    },
+    {
+      exerciseId: `${lessonId}_ex2`,
+      lessonId,
+      type: 'learn_word',
+      prompt: `Learn: ${p2.meaning}`,
+      tribalWord: `${p2.native} (${p2.roman})`,
+      nativeScript: p2.native,
+      transliteration: p2.roman,
+      audioPronunciationText: p2.roman,
+      englishMeaning: p2.meaning,
+      hindiMeaning: p2.meaning,
+      correctAnswer: p2.roman,
+      explanation: `"${p2.native}" signifies ${p2.meaning.toLowerCase()}.`,
+      order: 2,
+    },
+    {
+      exerciseId: `${lessonId}_ex3`,
+      lessonId,
+      type: 'multiple_choice',
+      prompt: `What is the meaning of "${p1.native}" (${p1.roman})?`,
+      tribalWord: p1.native,
+      options: [p1.meaning, p2.meaning, p3.meaning, p4.meaning],
+      correctAnswer: p1.meaning,
+      explanation: `"${p1.native}" translates directly to "${p1.meaning}".`,
+      order: 3,
+    },
+    {
+      exerciseId: `${lessonId}_ex4`,
+      lessonId,
+      type: 'learn_word',
+      prompt: `Learn: ${p3.meaning} and ${p4.meaning}`,
+      tribalWord: `${p3.native} (${p3.roman}) / ${p4.native} (${p4.roman})`,
+      nativeScript: `${p3.native} / ${p4.native}`,
+      transliteration: `${p3.roman} / ${p4.roman}`,
+      audioPronunciationText: p3.roman,
+      englishMeaning: `${p3.meaning} & ${p4.meaning}`,
+      hindiMeaning: `${p3.meaning} & ${p4.meaning}`,
+      correctAnswer: p3.roman,
+      explanation: `Mastering "${p3.native}" (${p3.meaning}) and "${p4.native}" (${p4.meaning}).`,
+      order: 4,
+    },
+    {
+      exerciseId: `${lessonId}_ex5`,
+      lessonId,
+      type: 'select_meaning',
+      prompt: `Select the meaning of "${p3.native}" (${p3.roman}):`,
+      tribalWord: p3.native,
+      options: [p3.meaning, p1.meaning, p2.meaning, p4.meaning],
+      correctAnswer: p3.meaning,
+      explanation: `"${p3.native}" (${p3.roman}) means ${p3.meaning}.`,
+      order: 5,
+    },
+    {
+      exerciseId: `${lessonId}_ex6`,
+      lessonId,
+      type: 'match_pairs',
+      prompt: `Match the ${topicTitle} terms with their meanings:`,
+      pairs: [
+        { tribal: p1.native, translation: p1.meaning },
+        { tribal: p2.native, translation: p2.meaning },
+        { tribal: p3.native, translation: p3.meaning },
+        { tribal: p4.native, translation: p4.meaning },
+      ],
+      correctAnswer: [
+        `${p1.native}:${p1.meaning}`,
+        `${p2.native}:${p2.meaning}`,
+        `${p3.native}:${p3.meaning}`,
+        `${p4.native}:${p4.meaning}`,
+      ],
+      explanation: `All 4 ${topicTitle} expressions mastered!`,
+      order: 6,
+    },
+    {
+      exerciseId: `${lessonId}_ex7`,
+      lessonId,
+      type: 'fill_blank',
+      prompt: `Complete the phrase: "____" (${p1.meaning})`,
+      options: [p1.native, p2.native, p3.native, p4.native],
+      correctAnswer: p1.native,
+      explanation: `"${p1.native}" (${p1.roman}) represents ${p1.meaning}.`,
+      order: 7,
+    },
+  ];
+
+  return { exercises, introducedWords, lessonTitle: topicTitle };
 };

@@ -109,15 +109,14 @@ export const DashboardPage: React.FC = () => {
                 {completedCount === 0 ? 'Start Interactive Road' : `Resume: ${nextLesson?.title.split('(')[0] || 'Learning Road'}`}
               </Button>
 
-              <Button
-                variant="outline"
-                size="md"
+              <button
+                type="button"
                 onClick={() => navigate('/vocabulary')}
-                icon={<Layers className="w-4 h-4" />}
-                className="bg-cream-100/10 border-cream-100/30 text-cream-100 hover:bg-cream-100/20"
+                className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-extrabold text-sm px-5 py-2.5 rounded-2xl border-2 border-white/50 shadow-[0_3px_0_rgba(0,0,0,0.2)] active:translate-y-1 transition-all"
               >
-                Practice Flashcards
-              </Button>
+                <Layers className="w-4 h-4 text-white" />
+                <span>Practice Flashcards</span>
+              </button>
             </div>
           </div>
 

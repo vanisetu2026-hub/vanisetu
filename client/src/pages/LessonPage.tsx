@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLearning } from '../contexts/LearningContext';
 import { EXERCISES, LESSONS, LESSON_INTRODUCED_VOCABULARY } from '../data/tribalData';
+import { getTopicExercisesForLesson } from '../data/curriculumData';
 import { ExerciseRenderer } from '../components/lesson/ExerciseRenderer';
 import { ProgressBar } from '../components/common/ProgressBar';
 import { Modal } from '../components/common/Modal';
@@ -13,18 +14,21 @@ export const LessonPage: React.FC = () => {
   const { selectedLanguage, completeLesson } = useLearning();
 
   const fallbackKey = `${selectedLanguage.languageId}_l1`;
+  const unitExercisesData = getTopicExercisesForLesson(selectedLanguage.languageId, lessonId || fallbackKey);
+
   const lesson = LESSONS.find((l) => l.lessonId === lessonId) || {
     lessonId: lessonId || fallbackKey,
     courseId: `course_${selectedLanguage.languageId}_101`,
     languageId: selectedLanguage.languageId,
-    title: 'Unit Practice & Mastery',
-    description: 'Master core conversational phrases and cultural heritage.',
+    title: unitExercisesData.lessonTitle,
+    description: `Master authentic vocabulary for ${unitExercisesData.lessonTitle}.`,
     order: 1,
     xpReward: 25,
     isPublished: true,
   };
-  const exercises = EXERCISES[lesson.lessonId] || EXERCISES[fallbackKey] || EXERCISES['mun_l1'];
-  const introducedWords = LESSON_INTRODUCED_VOCABULARY[lesson.lessonId] || LESSON_INTRODUCED_VOCABULARY[fallbackKey] || [];
+
+  const exercises = EXERCISES[lesson.lessonId] || unitExercisesData.exercises;
+  const introducedWords = LESSON_INTRODUCED_VOCABULARY[lesson.lessonId] || unitExercisesData.introducedWords;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);

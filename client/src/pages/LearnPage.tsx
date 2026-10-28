@@ -110,10 +110,10 @@ export const LearnPage: React.FC = () => {
     if (unitIdx > 0) {
       const prevUnit = allUnits[unitIdx - 1];
       const prevTrophy = prevUnit.nodes[prevUnit.nodes.length - 1];
-      return isNodeCompleted(prevTrophy) || unitIdx <= 1; // First 2 units open for demo
+      return isNodeCompleted(prevTrophy);
     }
 
-    return true;
+    return false;
   };
 
   // Find the single current active (first unlocked, uncompleted) node in this section
@@ -133,19 +133,28 @@ export const LearnPage: React.FC = () => {
     if (activeNode) break;
   }
 
-  // Auto-scroll to active node on mount / section switch / language switch
+  // Automatic smooth scroll to active node on mount / section switch / language switch
   useEffect(() => {
-    const timer = setTimeout(() => {
+    let timer1: NodeJS.Timeout;
+    let timer2: NodeJS.Timeout;
+
+    const performScroll = () => {
       if (activeNodeRef.current) {
         activeNodeRef.current.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
         });
       }
-    }, 450);
+    };
 
-    return () => clearTimeout(timer);
-  }, [activeSectionId, selectedLanguage.languageId]);
+    timer1 = setTimeout(performScroll, 200);
+    timer2 = setTimeout(performScroll, 600);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [activeSectionId, selectedLanguage.languageId, activeNode?.nodeId]);
 
   // Handle clicking on a path node
   const handleNodeClick = (node: PathNode) => {
@@ -232,7 +241,6 @@ export const LearnPage: React.FC = () => {
             onOpenGuidebook={() => setSelectedGuidebookUnit(activeUnitForHeader)}
             onOpenSectionSelector={() => setIsSectionModalOpen(true)}
             onStartActiveLesson={() => activeNode && handleNodeClick(activeNode)}
-            onScrollToActiveNode={scrollToActiveNode}
           />
 
           {/* Section Progress Bar */}
@@ -414,22 +422,6 @@ export const LearnPage: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Floating Jump Button (matching Duolingo screenshot bottom-right) */}
-      <button
-        type="button"
-        onClick={scrollToActiveNode}
-        title="Jump to current active lesson"
-        aria-label="Jump to current active lesson"
-        className="fixed bottom-6 right-6 z-40 pl-3.5 pr-4 py-2.5 rounded-full bg-white text-blue-600 border-2 border-blue-200 shadow-earthy-lg flex items-center gap-2 hover:bg-blue-50 active:scale-95 transition-all group animate-bounce hover:animate-none"
-      >
-        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:translate-y-0.5 transition-transform">
-          <ArrowDown className="w-4 h-4 stroke-[3]" />
-        </div>
-        <span className="text-xs font-extrabold text-blue-900 hidden sm:inline">
-          Jump to Lesson
-        </span>
-      </button>
 
       {/* Modals */}
       <UnitGuidebookModal
