@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { Footer } from '../components/layout/Footer';
 import { CulturalPattern } from '../components/common/CulturalPattern';
+import heroIllustration from '../assets/hero-illustration.jpg';
 import {
   BookOpen,
   Volume2,
@@ -139,49 +140,21 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Hero Illustration: Culturally Respectful Landscape & Digital Bridge */}
+          {/* Right Hero Illustration: Culturally Respectful Learning & Intergenerational Bridge */}
           <div className="lg:col-span-5 flex justify-center">
-            <div className="relative w-full max-w-[320px] sm:max-w-md aspect-square bg-gradient-to-b from-forest-50 via-cream-100 to-cream-200 rounded-3xl p-4 sm:p-6 border-2 sm:border-3 border-sage-300 shadow-earthy-lg overflow-hidden flex flex-col items-center justify-center text-center">
-              {/* Stylized SVG Tribal Scenery */}
-              <svg viewBox="0 0 400 400" className="w-full h-full drop-shadow-sm">
-                {/* Sun and Sky */}
-                <circle cx="200" cy="110" r="50" fill="#E9A23B" opacity="0.85" />
-                <path d="M 120 180 Q 200 130 280 180 Z" fill="#668A70" opacity="0.3" />
+            <div className="relative w-full max-w-[340px] sm:max-w-md aspect-square bg-cream-100 rounded-3xl border-3 border-sage-300 shadow-earthy-lg overflow-hidden flex flex-col items-center justify-center group">
+              <img
+                src={heroIllustration}
+                alt="Tribal elder teaching a child indigenous language and scripts on a digital tablet"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                loading="eager"
+              />
 
-                {/* Ancestral Sacred Hills (Burus) */}
-                <path d="M 0 260 L 100 160 L 220 260 Z" fill="#214B32" opacity="0.6" />
-                <path d="M 160 260 L 290 140 L 400 260 Z" fill="#214B32" opacity="0.8" />
-                <path d="M 60 280 L 180 190 L 320 280 Z" fill="#1A3C28" />
+              {/* Gentle gradient overlay at bottom for the caption pill */}
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-teal-950/40 via-teal-950/10 to-transparent pointer-events-none" />
 
-                {/* Sacred Sal Trees (Sarjom) Canopy */}
-                <circle cx="90" cy="220" r="28" fill="#3D794F" />
-                <rect x="86" y="240" width="8" height="40" fill="#513829" />
-                <circle cx="310" cy="210" r="32" fill="#3D794F" />
-                <rect x="306" y="234" width="8" height="46" fill="#513829" />
-
-                {/* River of Wisdom */}
-                <path
-                  d="M 0 340 C 120 310, 240 370, 400 330 L 400 400 L 0 400 Z"
-                  fill="#6894A0"
-                  opacity="0.7"
-                />
-
-                {/* Digital Bridge Arc Connecting Past & Future */}
-                <path
-                  d="M 50 340 C 130 270, 270 270, 350 340"
-                  stroke="#E9A23B"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-
-                {/* Learner with Smartphone (Digital Bridge) */}
-                <rect x="182" y="270" width="36" height="60" rx="8" fill="#F7F5EB" stroke="#214B32" strokeWidth="3" />
-                <rect x="187" y="278" width="26" height="40" rx="4" fill="#214B32" />
-                <circle cx="200" cy="298" r="6" fill="#E9A23B" />
-              </svg>
-
-              <div className="absolute bottom-3 sm:bottom-4 left-3 right-3 sm:left-4 sm:right-4 bg-cream-50/90 backdrop-blur-sm p-2 sm:p-3 rounded-2xl border border-sage-200 shadow-sm text-[11px] sm:text-xs font-bold text-teal-900">
+              <div className="absolute bottom-3 sm:bottom-4 left-3 right-3 sm:left-4 sm:right-4 bg-cream-50/95 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-sage-300 shadow-md text-[11px] sm:text-xs font-bold text-teal-950 flex items-center justify-center gap-1.5 text-center">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400 shrink-0" />
                 <span>Connecting Generations Through Digital Preservation</span>
               </div>
             </div>
