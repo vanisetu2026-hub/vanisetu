@@ -12,9 +12,19 @@ export const LessonPage: React.FC = () => {
   const navigate = useNavigate();
   const { selectedLanguage, completeLesson } = useLearning();
 
-  const lesson = LESSONS.find((l) => l.lessonId === lessonId) || LESSONS[0];
-  const exercises = EXERCISES[lesson.lessonId] || EXERCISES['mun_l1'];
-  const introducedWords = LESSON_INTRODUCED_VOCABULARY[lesson.lessonId] || [];
+  const fallbackKey = `${selectedLanguage.languageId}_l1`;
+  const lesson = LESSONS.find((l) => l.lessonId === lessonId) || {
+    lessonId: lessonId || fallbackKey,
+    courseId: `course_${selectedLanguage.languageId}_101`,
+    languageId: selectedLanguage.languageId,
+    title: 'Unit Practice & Mastery',
+    description: 'Master core conversational phrases and cultural heritage.',
+    order: 1,
+    xpReward: 25,
+    isPublished: true,
+  };
+  const exercises = EXERCISES[lesson.lessonId] || EXERCISES[fallbackKey] || EXERCISES['mun_l1'];
+  const introducedWords = LESSON_INTRODUCED_VOCABULARY[lesson.lessonId] || LESSON_INTRODUCED_VOCABULARY[fallbackKey] || [];
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);

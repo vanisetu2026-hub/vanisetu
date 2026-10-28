@@ -46,6 +46,59 @@ export interface Course {
   totalLessons: number;
 }
 
+export type PathNodeType = 'lesson' | 'script' | 'chest' | 'trophy';
+
+export interface PathNode {
+  nodeId: string;
+  unitId: string;
+  type: PathNodeType;
+  title: string;
+  description: string;
+  lessonId?: string;
+  scriptChar?: string;
+  xpReward: number;
+  rewardChest?: {
+    xp: number;
+    title: string;
+    proverb: string;
+    culturalContext: string;
+  };
+  order: number;
+}
+
+export interface UnitGuidebookPhrase {
+  native: string;
+  roman: string;
+  meaning: string;
+  audioText?: string;
+}
+
+export interface Unit {
+  unitId: string;
+  sectionId: string;
+  unitNumber: number; // 1 to 8
+  title: string;
+  subtitle: string;
+  description: string;
+  themeColor: string; // 'green' | 'purple' | 'blue' | 'amber' | 'rose' | 'teal' | 'indigo' | 'gold'
+  mascot?: {
+    name: string;
+    avatar: string;
+    quote: string;
+  };
+  guidebookPhrases: UnitGuidebookPhrase[];
+  nodes: PathNode[];
+}
+
+export interface Section {
+  sectionId: string;
+  sectionNumber: number; // 1, 2, 3
+  title: string;
+  subtitle: string;
+  description: string;
+  units: Unit[];
+}
+
 export interface Lesson {
   lessonId: string;
   courseId: string;
