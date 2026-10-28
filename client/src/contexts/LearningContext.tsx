@@ -35,7 +35,14 @@ interface LearningContextType {
   likedContributions: string[];
   isContributionLiked: (id: string) => boolean;
   likeContribution: (id: string) => void;
-  completeLesson: (lessonId: string, score: number, accuracy: number, xpEarned: number) => void;
+  completedLessons: string[];
+  completeLesson: (
+    lessonId: string,
+    score: number,
+    accuracy: number,
+    xpEarned: number,
+    nodeId?: string
+  ) => void;
   isLessonCompleted: (lessonId: string) => boolean;
   isLessonUnlocked: (lesson: Lesson) => boolean;
 }
@@ -46,14 +53,41 @@ const LOCAL_FAVORITES_KEY = 'vanisetu_favorites';
 const LOCAL_REMINDERS_KEY = 'vanisetu_reminders';
 const LOCAL_COMMUNITY_KEY = 'vanisetu_community_contributions';
 const LOCAL_LIKED_CONTRIBUTIONS_KEY = 'vanisetu_liked_contributions';
+const LOCAL_COMPLETED_LESSONS_KEY = 'vanisetu_completed_lessons';
+const LOCAL_COMPLETED_NODES_KEY = 'vanisetu_completed_nodes';
 
 export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, loginAsGuest } = useAuth();
   const { addToast } = useNotification();
 
   const [languageId, setLanguageId] = useState<string>(
     user?.selectedLanguage || 'mundari'
   );
+
+  const [completedLessons, setCompletedLessons] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_COMPLETED_LESSONS_KEY);
+      const localList: string[] = saved ? JSON.parse(saved) : [];
+      const userList: string[] = user?.completedLessons || [];
+      return Array.from(new Set([...localList, ...userList]));
+    } catch {
+      return user?.completedLessons || [];
+    }
+  });
+
+  // Sync user profile updates with completedLessons
+  useEffect(() => {
+    if (user?.completedLessons && user.completedLessons.length > 0) {
+      setCompletedLessons((prev) => {
+        const merged = Array.from(new Set([...prev, ...user.completedLessons]));
+        if (merged.length !== prev.length) {
+          localStorage.setItem(LOCAL_COMPLETED_LESSONS_KEY, JSON.stringify(merged));
+          return merged;
+        }
+        return prev;
+      });
+    }
+  }, [user?.completedLessons]);
 
   const [likedContributions, setLikedContributions] = useState<string[]>(() => {
     try {
@@ -238,7 +272,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const isLessonCompleted = (lessonId: string): boolean => {
-    return user?.completedLessons.includes(lessonId) || false;
+    if (!lessonId) return false;
+    return (
+      completedLessons.includes(lessonId) ||
+      (user?.completedLessons?.includes(lessonId) ?? false)
+    );
   };
 
   const isLessonUnlocked = (lesson: Lesson): boolean => {
@@ -250,21 +288,66 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     lessonId: string,
     _score: number,
     _accuracy: number,
-    xpEarned: number
+    xpEarned: number,
+    nodeId?: string
   ) => {
-    if (!user) return;
+    const idsToRecord = [lessonId];
+    if (nodeId && nodeId !== lessonId) {
+      idsToRecord.push(nodeId);
+    }
 
-    const alreadyDone = user.completedLessons.includes(lessonId);
-    const newCompleted = alreadyDone
-      ? user.completedLessons
-      : [...user.completedLessons, lessonId];
+    // 1. Immediately record in completedLessons state and localStorage
+    setCompletedLessons((prev) => {
+      const updated = Array.from(new Set([...prev, ...idsToRecord]));
+      localStorage.setItem(LOCAL_COMPLETED_LESSONS_KEY, JSON.stringify(updated));
+      return updated;
+    });
 
-    const newXP = (user.totalXP || 0) + xpEarned;
-    const newStreak = (user.currentStreak || 1) + (alreadyDone ? 0 : 1);
-    const longest = Math.max(user.longestStreak || 1, newStreak);
+    // 2. Also record in completed nodes key if nodeId is provided
+    if (nodeId) {
+      try {
+        const savedNodes = localStorage.getItem(LOCAL_COMPLETED_NODES_KEY);
+        const nodeList: string[] = savedNodes ? JSON.parse(savedNodes) : [];
+        if (!nodeList.includes(nodeId)) {
+          localStorage.setItem(LOCAL_COMPLETED_NODES_KEY, JSON.stringify([...nodeList, nodeId]));
+        }
+      } catch {
+        // Ignore
+      }
+    }
+
+    // 3. User profile persistence (logged-in or auto-guest)
+    let activeProfile = user;
+    if (!activeProfile) {
+      activeProfile = {
+        uid: 'guest_' + Math.random().toString(36).substring(2, 9),
+        name: 'Guest Learner',
+        email: '',
+        role: 'learner',
+        selectedLanguage: languageId,
+        totalXP: 0,
+        currentStreak: 1,
+        longestStreak: 1,
+        dailyGoal: 50,
+        completedLessons: [],
+        unlockedAchievements: [],
+        createdAt: new Date().toISOString(),
+        isGuest: true,
+      };
+      sessionStorage.removeItem('vanisetu_admin_key');
+      localStorage.setItem('vanisetu_user_session', JSON.stringify(activeProfile));
+      loginAsGuest();
+    }
+
+    const alreadyDone = activeProfile.completedLessons?.includes(lessonId);
+    const newCompleted = Array.from(new Set([...(activeProfile.completedLessons || []), ...idsToRecord]));
+
+    const newXP = (activeProfile.totalXP || 0) + xpEarned;
+    const newStreak = (activeProfile.currentStreak || 1) + (alreadyDone ? 0 : 1);
+    const longest = Math.max(activeProfile.longestStreak || 1, newStreak);
 
     // Check achievement unlocking
-    const newAchievements = [...user.unlockedAchievements];
+    const newAchievements = [...(activeProfile.unlockedAchievements || [])];
     if (newCompleted.length >= 1 && !newAchievements.includes('ach_first_steps')) {
       newAchievements.push('ach_first_steps');
     }
@@ -319,6 +402,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         likedContributions,
         isContributionLiked,
         likeContribution,
+        completedLessons,
         completeLesson,
         isLessonCompleted,
         isLessonUnlocked,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLearning } from '../contexts/LearningContext';
 import { EXERCISES, LESSONS, LESSON_INTRODUCED_VOCABULARY } from '../data/tribalData';
 import { getTopicExercisesForLesson } from '../data/curriculumData';
@@ -11,6 +11,8 @@ import { Sparkles, X, BookOpen, ShieldCheck } from 'lucide-react';
 export const LessonPage: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const routeState = location.state as { nodeId?: string; unitId?: string; lessonId?: string } | undefined;
   const { selectedLanguage, completeLesson } = useLearning();
 
   const fallbackKey = `${selectedLanguage.languageId}_l1`;
@@ -51,7 +53,7 @@ export const LessonPage: React.FC = () => {
       const accuracy = Math.round((updatedCorrect / exercises.length) * 100);
       const xpEarned = lesson.xpReward + (accuracy >= 80 ? 10 : 0);
 
-      completeLesson(lesson.lessonId, updatedCorrect, accuracy, xpEarned);
+      completeLesson(lesson.lessonId, updatedCorrect, accuracy, xpEarned, routeState?.nodeId);
 
       // Navigate to Lesson Completion celebration page
       navigate('/lesson-completed', {

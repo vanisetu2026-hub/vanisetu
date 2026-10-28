@@ -28,7 +28,7 @@ import {
 
 export const LearnPage: React.FC = () => {
   const { user, updateUser } = useAuth();
-  const { selectedLanguage } = useLearning();
+  const { selectedLanguage, isLessonCompleted, completedLessons } = useLearning();
   const { addToast } = useNotification();
   const navigate = useNavigate();
 
@@ -76,10 +76,18 @@ export const LearnPage: React.FC = () => {
   // Reference for active lesson to scroll to
   const activeNodeRef = useRef<HTMLDivElement | null>(null);
 
-  // Check node completed state
+  // Check node completed state (checks context state, localStorage fallback, and user profile)
   const isNodeCompleted = (node: PathNode): boolean => {
     if (node.type === 'lesson' || node.type === 'trophy') {
-      return user?.completedLessons.includes(node.lessonId || '') || false;
+      const lid = node.lessonId || '';
+      return (
+        isLessonCompleted(lid) ||
+        isLessonCompleted(node.nodeId) ||
+        completedLessons.includes(lid) ||
+        completedLessons.includes(node.nodeId) ||
+        (user?.completedLessons?.includes(lid) ?? false) ||
+        (user?.completedLessons?.includes(node.nodeId) ?? false)
+      );
     }
     if (node.type === 'chest') {
       return claimedChests.includes(node.nodeId);
@@ -90,6 +98,26 @@ export const LearnPage: React.FC = () => {
     return false;
   };
 
+  // Helper: check if a whole unit is unlocked
+  const isUnitUnlocked = (unitIdx: number, allUnits: Unit[]): boolean => {
+    // Unit 1 (index 0) is always unlocked
+    if (unitIdx === 0) return true;
+    const prevUnit = allUnits[unitIdx - 1];
+    if (!prevUnit) return false;
+
+    // Previous unit is unlocked if its finale trophy is completed,
+    // OR if all previous unit core lessons are completed.
+    const prevTrophy = prevUnit.nodes.find((n) => n.type === 'trophy');
+    if (prevTrophy && isNodeCompleted(prevTrophy)) return true;
+
+    const prevLessons = prevUnit.nodes.filter((n) => n.type === 'lesson');
+    if (prevLessons.length > 0 && prevLessons.every((n) => isNodeCompleted(n))) {
+      return true;
+    }
+
+    return false;
+  };
+
   // Check node unlocked state
   const isNodeUnlocked = (
     node: PathNode,
@@ -97,40 +125,89 @@ export const LearnPage: React.FC = () => {
     unitIdx: number,
     allUnits: Unit[]
   ): boolean => {
-    // First node of Unit 1 is always unlocked
-    if (unitIdx === 0 && node.order === 1) return true;
+    // If the unit itself is locked, no node inside it is unlocked
+    if (!isUnitUnlocked(unitIdx, allUnits)) return false;
 
-    // Inside unit: unlocked if previous node in unit is completed
+    // First node of an unlocked unit is always unlocked
     const nodeIdx = unitNodes.findIndex((n) => n.nodeId === node.nodeId);
-    if (nodeIdx > 0) {
-      return isNodeCompleted(unitNodes[nodeIdx - 1]);
+    if (nodeIdx === 0) return true;
+
+    // Gather all prior core lessons in this unit before the current node
+    const priorLessons = unitNodes.slice(0, nodeIdx).filter((n) => n.type === 'lesson');
+
+    // If there are no prior core lessons, it is unlocked
+    if (priorLessons.length === 0) return true;
+
+    // If this node is a core lesson (e.g. Lesson 2):
+    // Unlocks as soon as all prior core lessons in this unit are completed!
+    // Never blocked by milestone chests or script glyphs.
+    if (node.type === 'lesson') {
+      return priorLessons.every((l) => isNodeCompleted(l));
     }
 
-    // First node of Unit N: unlocked if previous unit's finale trophy is completed
-    if (unitIdx > 0) {
-      const prevUnit = allUnits[unitIdx - 1];
-      const prevTrophy = prevUnit.nodes[prevUnit.nodes.length - 1];
-      return isNodeCompleted(prevTrophy);
+    // If this node is a trophy (unit finale):
+    // Unlocks as soon as all core lessons in this unit are completed!
+    if (node.type === 'trophy') {
+      const allUnitLessons = unitNodes.filter((n) => n.type === 'lesson');
+      return allUnitLessons.every((l) => isNodeCompleted(l));
     }
 
-    return false;
+    // If this node is a milestone chest or script practice:
+    // Unlocks as soon as the core lesson immediately preceding it is completed!
+    const immediatePrecedingLesson = [...priorLessons].pop();
+    if (immediatePrecedingLesson) {
+      return isNodeCompleted(immediatePrecedingLesson);
+    }
+
+    return true;
   };
 
-  // Find the single current active (first unlocked, uncompleted) node in this section
+  // Find the single current active node in this section
+  // Priority 1: First unlocked, uncompleted core lesson or trophy
   let activeNode: PathNode | null = null;
   let activeUnitForHeader = currentSection.units[0];
 
   for (const unit of currentSection.units) {
+    const unitIdx = unit.unitNumber - 1;
+    if (!isUnitUnlocked(unitIdx, currentSection.units)) continue;
+
     for (const node of unit.nodes) {
-      const unlocked = isNodeUnlocked(node, unit.nodes, unit.unitNumber - 1, currentSection.units);
-      const completed = isNodeCompleted(node);
-      if (unlocked && !completed) {
-        activeNode = node;
-        activeUnitForHeader = unit;
-        break;
+      if (node.type === 'lesson' || node.type === 'trophy') {
+        const unlocked = isNodeUnlocked(node, unit.nodes, unitIdx, currentSection.units);
+        const completed = isNodeCompleted(node);
+        if (unlocked && !completed) {
+          activeNode = node;
+          activeUnitForHeader = unit;
+          break;
+        }
       }
     }
     if (activeNode) break;
+  }
+
+  // Priority 2: If all core lessons & trophies are done, check for unclaimed milestone chests or scripts
+  if (!activeNode) {
+    for (const unit of currentSection.units) {
+      const unitIdx = unit.unitNumber - 1;
+      if (!isUnitUnlocked(unitIdx, currentSection.units)) continue;
+
+      for (const node of unit.nodes) {
+        const unlocked = isNodeUnlocked(node, unit.nodes, unitIdx, currentSection.units);
+        const completed = isNodeCompleted(node);
+        if (unlocked && !completed) {
+          activeNode = node;
+          activeUnitForHeader = unit;
+          break;
+        }
+      }
+      if (activeNode) break;
+    }
+  }
+
+  // Fallback to first node if everything is completed or default
+  if (!activeNode) {
+    activeNode = currentSection.units[0]?.nodes[0] || null;
+    activeUnitForHeader = currentSection.units[0];
   }
 
   // Automatic smooth scroll to active node on mount / section switch / language switch
@@ -159,7 +236,13 @@ export const LearnPage: React.FC = () => {
   // Handle clicking on a path node
   const handleNodeClick = (node: PathNode) => {
     if (node.type === 'lesson' || node.type === 'trophy') {
-      navigate(`/lesson/${node.lessonId || 'mun_l1'}`);
+      navigate(`/lesson/${node.lessonId || 'mun_l1'}`, {
+        state: {
+          nodeId: node.nodeId,
+          unitId: node.unitId,
+          lessonId: node.lessonId,
+        },
+      });
     } else if (node.type === 'chest') {
       setSelectedChestNode(node);
     } else if (node.type === 'script') {
