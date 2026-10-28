@@ -1,22 +1,28 @@
 import React from 'react';
-import { Unit } from '../../types';
+import { Unit, PathNode } from '../../types';
 import { UNIT_THEMES, UnitThemeConfig } from '../../data/curriculumData';
-import { BookOpen, ChevronDown, Sparkles } from 'lucide-react';
+import { BookOpen, ChevronDown, Sparkles, ArrowRight, Target } from 'lucide-react';
 
 interface UnitHeaderBannerProps {
   unit: Unit;
   sectionNumber: number;
   languageName: string;
+  activeNode?: PathNode | null;
   onOpenGuidebook: () => void;
   onOpenSectionSelector: () => void;
+  onStartActiveLesson?: () => void;
+  onScrollToActiveNode?: () => void;
 }
 
 export const UnitHeaderBanner: React.FC<UnitHeaderBannerProps> = ({
   unit,
   sectionNumber,
   languageName,
+  activeNode,
   onOpenGuidebook,
   onOpenSectionSelector,
+  onStartActiveLesson,
+  onScrollToActiveNode,
 }) => {
   const theme: UnitThemeConfig = UNIT_THEMES[unit.themeColor] || UNIT_THEMES.green;
 
@@ -65,6 +71,34 @@ export const UnitHeaderBanner: React.FC<UnitHeaderBannerProps> = ({
           <span className="hidden sm:inline-block text-xs font-extrabold">Guidebook</span>
         </button>
       </div>
+
+      {/* Quick Action: Continue Next Lesson Without Scrolling */}
+      {activeNode && onStartActiveLesson && (
+        <div className="mt-3 pt-2.5 border-t border-white/20 flex items-center justify-between gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={onStartActiveLesson}
+            className="inline-flex items-center gap-2 bg-white text-teal-950 hover:bg-cream-50 active:scale-95 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-black shadow-[0_3px_0_#94a3b8] transition-all"
+            title="Start your next lesson directly"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-current animate-pulse" />
+            <span className="truncate max-w-[200px] sm:max-w-xs">Continue: {activeNode.title}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+
+          {onScrollToActiveNode && (
+            <button
+              type="button"
+              onClick={onScrollToActiveNode}
+              className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-white/90 hover:text-white bg-white/15 hover:bg-white/25 px-2.5 py-1.5 rounded-xl transition-all border border-white/20"
+              title="Focus on this node on the road"
+            >
+              <Target className="w-3.5 h-3.5 text-gold-300" />
+              <span>Scroll to Node</span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

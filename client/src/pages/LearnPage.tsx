@@ -116,8 +116,8 @@ export const LearnPage: React.FC = () => {
     return true;
   };
 
-  // Find the current active (first unlocked, uncompleted) node in this section
-  let foundActive = false;
+  // Find the single current active (first unlocked, uncompleted) node in this section
+  let activeNode: PathNode | null = null;
   let activeUnitForHeader = currentSection.units[0];
 
   for (const unit of currentSection.units) {
@@ -125,13 +125,27 @@ export const LearnPage: React.FC = () => {
       const unlocked = isNodeUnlocked(node, unit.nodes, unit.unitNumber - 1, currentSection.units);
       const completed = isNodeCompleted(node);
       if (unlocked && !completed) {
+        activeNode = node;
         activeUnitForHeader = unit;
-        foundActive = true;
         break;
       }
     }
-    if (foundActive) break;
+    if (activeNode) break;
   }
+
+  // Auto-scroll to active node on mount / section switch / language switch
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (activeNodeRef.current) {
+        activeNodeRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [activeSectionId, selectedLanguage.languageId]);
 
   // Handle clicking on a path node
   const handleNodeClick = (node: PathNode) => {
@@ -214,8 +228,11 @@ export const LearnPage: React.FC = () => {
             unit={activeUnitForHeader}
             sectionNumber={currentSection.sectionNumber}
             languageName={selectedLanguage.name}
+            activeNode={activeNode}
             onOpenGuidebook={() => setSelectedGuidebookUnit(activeUnitForHeader)}
             onOpenSectionSelector={() => setIsSectionModalOpen(true)}
+            onStartActiveLesson={() => activeNode && handleNodeClick(activeNode)}
+            onScrollToActiveNode={scrollToActiveNode}
           />
 
           {/* Section Progress Bar */}
@@ -270,7 +287,7 @@ export const LearnPage: React.FC = () => {
                         unitIdx,
                         currentSection.units
                       );
-                      const isActiveNode = unlocked && !completed;
+                      const isActiveNode = activeNode ? node.nodeId === activeNode.nodeId : false;
 
                       return (
                         <div
@@ -398,15 +415,20 @@ export const LearnPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Floating Down Button (matching Duolingo screenshot 1 & 2 bottom-right arrow) */}
+      {/* Floating Jump Button (matching Duolingo screenshot bottom-right) */}
       <button
         type="button"
         onClick={scrollToActiveNode}
-        title="Scroll down to active lesson"
-        aria-label="Scroll to active lesson"
-        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-white text-blue-600 border-2 border-sage-300 shadow-earthy-lg flex items-center justify-center hover:bg-cream-100 active:scale-90 transition-all group"
+        title="Jump to current active lesson"
+        aria-label="Jump to current active lesson"
+        className="fixed bottom-6 right-6 z-40 pl-3.5 pr-4 py-2.5 rounded-full bg-white text-blue-600 border-2 border-blue-200 shadow-earthy-lg flex items-center gap-2 hover:bg-blue-50 active:scale-95 transition-all group animate-bounce hover:animate-none"
       >
-        <ArrowDown className="w-6 h-6 stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
+        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:translate-y-0.5 transition-transform">
+          <ArrowDown className="w-4 h-4 stroke-[3]" />
+        </div>
+        <span className="text-xs font-extrabold text-blue-900 hidden sm:inline">
+          Jump to Lesson
+        </span>
       </button>
 
       {/* Modals */}

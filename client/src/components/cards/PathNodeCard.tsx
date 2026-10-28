@@ -51,7 +51,7 @@ export const PathNodeCard: React.FC<PathNodeCardProps> = ({
   // Node is Chest
   if (node.type === 'chest') {
     return (
-      <div className={`flex flex-col items-center my-3 sm:my-5 relative transition-transform ${offsetClass}`}>
+      <div className={`flex flex-col items-center my-3 sm:my-5 relative transition-transform ${offsetClass} ${isActive ? 'scroll-mt-36 sm:scroll-mt-40' : ''}`}>
         {/* Connector Dots */}
         {index > 0 && (
           <div className="flex flex-col items-center gap-1.5 -mt-3 mb-2.5">
@@ -101,7 +101,7 @@ export const PathNodeCard: React.FC<PathNodeCardProps> = ({
   // Node is Trophy / Unit Finale
   if (node.type === 'trophy') {
     return (
-      <div className={`flex flex-col items-center my-4 sm:my-6 relative transition-transform ${offsetClass}`}>
+      <div className={`flex flex-col items-center my-4 sm:my-6 relative transition-transform ${offsetClass} ${isActive ? 'scroll-mt-36 sm:scroll-mt-40' : ''}`}>
         {/* Connector Dots */}
         {index > 0 && (
           <div className="flex flex-col items-center gap-1.5 -mt-3 mb-2.5">
@@ -151,7 +151,7 @@ export const PathNodeCard: React.FC<PathNodeCardProps> = ({
 
   // Standard Star Lesson or Native Script Character Node
   return (
-    <div className={`flex flex-col items-center my-3 sm:my-5 relative transition-transform ${offsetClass}`}>
+    <div className={`flex flex-col items-center my-3 sm:my-5 relative transition-transform ${offsetClass} ${isActive ? 'scroll-mt-36 sm:scroll-mt-40' : ''}`}>
       {/* Duolingo Journey Connector Dots */}
       {index > 0 && (
         <div className="flex flex-col items-center gap-1.5 -mt-3 mb-2.5">
