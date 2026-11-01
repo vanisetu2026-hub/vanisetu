@@ -151,7 +151,9 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
 
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (!hasChecked) {
+        if (exercise.type === 'learn_word') {
+          onNext(true);
+        } else if (!hasChecked) {
           if (canCheck()) {
             handleCheckAnswer();
           }
@@ -163,7 +165,7 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasChecked, exercise.options, canCheck, handleCheckAnswer, handleContinue]);
+  }, [hasChecked, exercise.type, exercise.options, canCheck, handleCheckAnswer, handleContinue, onNext]);
 
   // Pair Matching Logic
   const handlePairSelection = (tribal: string | null, translation: string | null) => {
@@ -519,20 +521,36 @@ export const ExerciseRenderer: React.FC<ExerciseRendererProps> = ({
       <div className="sticky bottom-0 bg-cream-200/95 backdrop-blur-md pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t-2 border-sage-200 mt-6 z-20 -mx-4 px-4 sm:mx-0 sm:px-0">
         {!hasChecked ? (
           <div className="flex justify-end max-w-2xl mx-auto w-full">
-            <Button
-              variant="gold"
-              size="lg"
-              disabled={!canCheck()}
-              onClick={handleCheckAnswer}
-              className="w-full sm:w-auto min-w-[200px]"
-            >
-              <span className="flex items-center justify-center gap-2">
-                <span>Check Answer</span>
-                <span className="hidden lg:inline-flex items-center text-[10px] bg-teal-950/20 px-1.5 py-0.5 rounded font-mono">
-                  <CornerDownLeft className="w-3 h-3 mr-0.5" /> Enter
+            {exercise.type === 'learn_word' ? (
+              <Button
+                variant="gold"
+                size="lg"
+                onClick={() => onNext(true)}
+                className="w-full sm:w-auto min-w-[200px]"
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <span>Next</span>
+                  <span className="hidden lg:inline-flex items-center text-[10px] bg-teal-950/20 px-1.5 py-0.5 rounded font-mono">
+                    <CornerDownLeft className="w-3 h-3 mr-0.5" /> Enter
+                  </span>
                 </span>
-              </span>
-            </Button>
+              </Button>
+            ) : (
+              <Button
+                variant="gold"
+                size="lg"
+                disabled={!canCheck()}
+                onClick={handleCheckAnswer}
+                className="w-full sm:w-auto min-w-[200px]"
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <span>Check Answer</span>
+                  <span className="hidden lg:inline-flex items-center text-[10px] bg-teal-950/20 px-1.5 py-0.5 rounded font-mono">
+                    <CornerDownLeft className="w-3 h-3 mr-0.5" /> Enter
+                  </span>
+                </span>
+              </Button>
+            )}
           </div>
         ) : (
           <div
